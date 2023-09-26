@@ -61,10 +61,10 @@ mod prediction_market {
         
                 // Reset the market after resolution
                 for t in &mut self.outcome_tokens {
-                    let _ = t.take_all(); // Ignore the result intentionally
+                    drop(t.take_all()); // Drop the Bucket value explicitly
                 }
                 self.total_staked = Decimal::from(0);
-        
+
                 return rewards;
             }
         
