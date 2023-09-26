@@ -39,5 +39,37 @@ mod prediction_market {
         pub fn list_outcomes(&self) -> Vec<String> {
             self.outcomes.clone()
         }
+
+        pub fn resolve_market(&mut self, winning_outcome: u32) -> Vec<(String, Decimal)> {
+            if (winning_outcome as usize) < self.outcome_tokens.len() {
+                // Calculate the reward for each participant
+                let mut rewards = Vec::new();
+                for (index, outcome_token) in self.outcome_tokens.iter_mut().enumerate() {
+                    let bet_amount: Bucket = outcome_token.take_all();
+        
+                    let outcome = &self.outcomes[index];
+                    let reward = if index == winning_outcome as usize {
+                        // If it's the winning outcome, distribute the entire pot to participants
+                        self.total_staked.clone()
+                    } else {
+                        // Otherwise, return the bet amount as is
+                        Decimal::from(bet_amount.amount())
+                    };
+        
+                    rewards.push((outcome.clone(), reward));
+                }
+        
+                // Reset the market after resolution
+                for t in &mut self.outcome_tokens {
+                    let _ = t.take_all(); // Ignore the result intentionally
+                }
+                self.total_staked = Decimal::from(0);
+        
+                return rewards;
+            }
+        
+            // Invalid winning outcome
+            Vec::new()
+        }
     }
 }
