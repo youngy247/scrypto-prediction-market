@@ -35,5 +35,9 @@ mod prediction_market {
             .prepare_to_globalize(OwnerRole::None)
             .globalize()
         }
+
+        pub fn list_outcomes(&self) -> Vec<String> {
+            self.outcomes.clone()
+        }
     }
 }
