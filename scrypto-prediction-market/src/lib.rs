@@ -7,6 +7,8 @@ mod prediction_market {
         outcomes: Vec<String>,
         total_staked: Decimal,
         xrd_vault: Vault,
+            /// A Vec of tuples. Each tuple consists of an Account hash and a balance.
+        users: Vec<(String, Decimal)>,
     }
 
     impl PredictionMarket {
