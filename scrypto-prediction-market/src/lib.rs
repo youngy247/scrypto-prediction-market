@@ -36,6 +36,9 @@ mod prediction_market {
         pub fn list_outcomes(&self) -> Vec<String> {
             self.outcomes.clone()
         }
+        pub fn get_total_staked(&self) -> Decimal {
+            self.total_staked.clone()
+        }
 
         pub fn resolve_market(&mut self, winning_outcome: u32) -> Vec<(String, Decimal)> {
             if (winning_outcome as usize) < self.outcome_tokens.len() {
