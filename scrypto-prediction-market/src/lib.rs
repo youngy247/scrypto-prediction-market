@@ -40,6 +40,12 @@ mod prediction_market {
             self.total_staked.clone()
         }
 
+        pub fn get_outcome_balance(&self, outcome: String) -> Option<Decimal> {
+            self.outcomes.iter().position(|o| o == &outcome).map(|index| {
+                Decimal::from(self.outcome_tokens[index].amount())
+            })
+        }
+
         pub fn resolve_market(&mut self, winning_outcome: u32) -> Vec<(String, Decimal)> {
             if (winning_outcome as usize) < self.outcome_tokens.len() {
                 // Calculate the reward for each participant
