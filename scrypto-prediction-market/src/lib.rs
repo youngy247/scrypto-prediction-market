@@ -92,11 +92,15 @@ mod prediction_market {
                 self.total_staked += bet_amount;
                 return true;
             } else {
-                // If the outcome doesn't exist, return false.
-                false
+
+            /// Adds or updates a user's balance. If the user already exists, their balance will be increased by `amount`.
+            /// Otherwise, a new user entry is created with the specified `amount`.
+        pub fn add_or_update_user_balance(&mut self, user_hash: String, amount: Decimal) {
+            if let Some((_, balance)) = self.users.iter_mut().find(|(u, _)| u == &user_hash) {
+                *balance += amount;
+            } else {
+                self.users.push((user_hash, amount));
             }
         }
-        
     }
-            
 }
