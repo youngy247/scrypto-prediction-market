@@ -78,8 +78,11 @@ mod prediction_market {
             Vec::new()
         }
 
-        pub fn place_bet(&mut self, outcome: String, bet_amount: Decimal, mut user_xrd_vault: Vault) -> bool {
-            // Find the index of the outcome, if it exists in the outcomes vector.
+        
+    pub fn get_user_balance(&self, user_hash: String) -> Option<Decimal> {
+        self.users.iter().find(|(u, _)| u == &user_hash).map(|(_, balance)| balance.clone())
+    }
+
             if let Some(index) = self.outcomes.iter().position(|o| o == &outcome) {
                 let outcome_token = &mut self.outcome_tokens[index];
                 
