@@ -24,6 +24,7 @@ mod prediction_market {
                 outcomes,
                 total_staked: Decimal::from(0),
                 xrd_vault: Vault::new(XRD),
+                users: Vec::new(), // Initialize the vector
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
