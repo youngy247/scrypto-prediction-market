@@ -6,6 +6,7 @@ mod prediction_market {
         outcome_tokens: Vec<Vault>,
         outcomes: Vec<String>,
         total_staked: Decimal,
+        xrd_vault: Vault,
     }
 
     impl PredictionMarket {
@@ -30,6 +31,7 @@ mod prediction_market {
                 outcome_tokens,
                 outcomes,
                 total_staked: Decimal::from(0),
+                xrd_vault: Vault::new(XRD),
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
@@ -46,7 +48,7 @@ mod prediction_market {
                 let mut rewards = Vec::new();
                 for (index, outcome_token) in self.outcome_tokens.iter_mut().enumerate() {
                     let bet_amount: Bucket = outcome_token.take_all();
-        
+
                     let outcome = &self.outcomes[index];
                     let reward = if index == winning_outcome as usize {
                         // If it's the winning outcome, distribute the entire pot to participants
@@ -55,10 +57,10 @@ mod prediction_market {
                         // Otherwise, return the bet amount as is
                         Decimal::from(bet_amount.amount())
                     };
-        
+
                     rewards.push((outcome.clone(), reward));
                 }
-        
+
                 // Reset the market after resolution
                 for t in &mut self.outcome_tokens {
                     drop(t.take_all()); // Drop the Bucket value explicitly
@@ -67,7 +69,7 @@ mod prediction_market {
 
                 return rewards;
             }
-        
+
             // Invalid winning outcome
             Vec::new()
         }
