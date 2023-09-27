@@ -12,9 +12,10 @@ mod prediction_market {
     }
 
     impl PredictionMarket {
-        pub fn instantiate_prediction_market(outcomes: Vec<String>) -> Global<PredictionMarket> {
+        pub fn instantiate_prediction_market(outcomes_str: String) -> Global<PredictionMarket> {
+            let outcomes: Vec<String> = outcomes_str.split(',').map(|s| s.trim().to_string()).collect();
+            
             let mut outcome_tokens = Vec::new();
-        
             for _ in &outcomes {
                 outcome_tokens.push(Vault::new(XRD)); // Create a new XRD vault for each outcome
             }
