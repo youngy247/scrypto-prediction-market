@@ -73,5 +73,26 @@ mod prediction_market {
             // Invalid winning outcome
             Vec::new()
         }
+
+        pub fn place_bet(&mut self, outcome: String, bet_amount: Decimal, mut user_xrd_vault: Vault) -> bool {
+            // Find the index of the outcome, if it exists in the outcomes vector.
+            if let Some(index) = self.outcomes.iter().position(|o| o == &outcome) {
+                let outcome_token = &mut self.outcome_tokens[index];
+                
+                // Directly take the XRD tokens from the user's vault.
+                let taken_bucket = user_xrd_vault.take(bet_amount);
+                
+                // Put the taken XRD tokens into the corresponding outcome's vault.
+                outcome_token.put(taken_bucket);
+                
+                self.total_staked += bet_amount;
+                return true;
+            } else {
+                // If the outcome doesn't exist, return false.
+                false
+            }
+        }
+        
     }
+            
 }
