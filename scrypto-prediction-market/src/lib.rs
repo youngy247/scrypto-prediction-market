@@ -101,18 +101,30 @@ mod prediction_market {
         self.users.iter().find(|(u, _)| u == &user_hash).map(|(_, balance)| balance.clone())
     }
 
+            
+    pub fn place_bet(&mut self, user_hash: String, outcome: String, bet_amount: Decimal) -> bool {
+        // Check if the user has sufficient balance
+        if let Some((_, balance)) = self.users.iter().find(|(u, _)| u == &user_hash) {
+            if *balance < bet_amount {
+                return false; // Insufficient funds
+            }
+        } else {
+            return false; // User not found
+        }
+
+        let taken_bucket = self.xrd_vault.take(bet_amount); // Here, 'take' should be returning a bucket of the specified amount.
+        
             if let Some(index) = self.outcomes.iter().position(|o| o == &outcome) {
                 let outcome_token = &mut self.outcome_tokens[index];
-                
-                // Directly take the XRD tokens from the user's vault.
-                let taken_bucket = user_xrd_vault.take(bet_amount);
-                
-                // Put the taken XRD tokens into the corresponding outcome's vault.
                 outcome_token.put(taken_bucket);
-                
                 self.total_staked += bet_amount;
                 return true;
             } else {
+            self.xrd_vault.put(taken_bucket);  // Return the taken bucket if the outcome doesn't exist
+            return false;
+        }
+    }
+
 
             /// Adds or updates a user's balance. If the user already exists, their balance will be increased by `amount`.
             /// Otherwise, a new user entry is created with the specified `amount`.
