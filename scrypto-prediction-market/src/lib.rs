@@ -78,6 +78,24 @@ mod prediction_market {
             Vec::new()
         }
 
+        pub fn deposit(&mut self, account_id: String, payment: Bucket) -> Result<(), String> {
+            // Try to take the deposit amount from the user's default payment bucket
+            let deposit_amount = payment.amount();
+            
+            // Check if the deposit was successful (i.e., the user had enough balance)
+            if deposit_amount > Decimal::from(0) {
+            // Add the payment bucket to the component's xrd_vault
+            self.xrd_vault.put(payment);
+
+            // Add or update the user's balance in the users Vec.
+            self.add_or_update_user_balance(account_id.clone(), deposit_amount);
+
+            Ok(())
+        } else {
+            Err(format!("Invalid or insufficient XRD payment for user: {}", account_id))
+        }
+        }
+        
         
     pub fn get_user_balance(&self, user_hash: String) -> Option<Decimal> {
         self.users.iter().find(|(u, _)| u == &user_hash).map(|(_, balance)| balance.clone())
