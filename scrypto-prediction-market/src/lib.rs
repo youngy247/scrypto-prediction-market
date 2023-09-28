@@ -84,6 +84,10 @@ mod prediction_market {
             self.xrd_vault.put(deposit);
         }
 
+        pub fn get_xrd_vault_balance(&self) -> Decimal {
+            Decimal::from(self.xrd_vault.amount())
+        }
+
         pub fn resolve_market(&mut self, winning_outcome: u32) -> Vec<(String, Decimal)> {
             println!("Resolving market for winning outcome: {}", winning_outcome);
         
@@ -145,8 +149,6 @@ mod prediction_market {
         
             rewards
         }
-        
-
 
         // Add a new method for users to claim their rewards from their vaults.
         pub fn claim_reward(&mut self, user_hash: String) -> Option<Bucket> {
