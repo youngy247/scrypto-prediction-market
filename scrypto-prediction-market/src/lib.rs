@@ -5,10 +5,11 @@ mod prediction_market {
     struct PredictionMarket {
         outcome_tokens: Vec<Vault>,
         outcomes: Vec<String>,
+        odds: Vec<Decimal>,   
         total_staked: Decimal,
+        bets: Vec<(String, String, Decimal)>,
         xrd_vault: Vault,
-            /// A Vec of tuples. Each tuple consists of an Account hash and a balance.
-        users: Vec<(String, Decimal)>,
+        user_vaults: HashMap<String, Vault>,
     }
 
     impl PredictionMarket {
@@ -23,9 +24,11 @@ mod prediction_market {
             Self {
                 outcome_tokens,
                 outcomes,
+                odds,  
                 total_staked: Decimal::from(0),
+                bets: Vec::new(),
                 xrd_vault: Vault::new(XRD),
-                users: Vec::new(), // Initialize the vector
+                user_vaults: HashMap::new(),
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
