@@ -59,10 +59,14 @@ mod prediction_market {
         }
         
 
-        pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) -> bool {
+        pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) -> Result<(), String> {
+            if self.market_resolved {
+                return Err("Market has already been resolved.".to_string());
+            }
+            
             let bet_amount = payment.amount();
             if bet_amount <= Decimal::from(0) {
-                return false;  // Invalid bet amount
+                return Err("Invalid bet amount.".to_string());
             }
 
             // Check if user has a vault, if not create one.
@@ -70,15 +74,16 @@ mod prediction_market {
                 self.user_vaults.insert(user_hash.clone(), Vault::new(XRD));
             }
 
-            if let Some(index) = self.outcomes.iter().position(|o| o == &outcome) {
+            match self.outcomes.iter().position(|o| o == &outcome) {
+                Some(index) => {
                 let outcome_token = &mut self.outcome_tokens[index];
                 outcome_token.put(payment);
                 self.total_staked += bet_amount;
 
                 self.bets.push((user_hash, outcome, bet_amount));  // Record the bet
-                return true;
-            } else {
-                return false;  // Outcome doesn't exist
+                    Ok(())
+                },
+                None => Err("Outcome not found.".to_string())
             }
         }
 
