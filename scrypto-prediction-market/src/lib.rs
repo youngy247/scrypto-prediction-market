@@ -10,7 +10,9 @@ mod prediction_market {
         bets: Vec<(String, String, Decimal)>,
         xrd_vault: Vault,
         user_vaults: HashMap<String, Vault>,
+        market_resolved: bool,
     }
+
 
     impl PredictionMarket {
         pub fn instantiate_prediction_market(outcomes_str: String, odds_str: String) -> Global<PredictionMarket> {
@@ -34,6 +36,7 @@ mod prediction_market {
                 bets: Vec::new(),
                 xrd_vault: Vault::new(XRD),
                 user_vaults: HashMap::new(),
+                market_resolved: false
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
