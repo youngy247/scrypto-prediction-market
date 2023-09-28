@@ -13,8 +13,13 @@ mod prediction_market {
     }
 
     impl PredictionMarket {
-        pub fn instantiate_prediction_market(outcomes_str: String) -> Global<PredictionMarket> {
+        pub fn instantiate_prediction_market(outcomes_str: String, odds_str: String) -> Global<PredictionMarket> {
             let outcomes: Vec<String> = outcomes_str.split(',').map(|s| s.trim().to_string()).collect();
+            let odds: Vec<Decimal> = odds_str.split(',')
+                .map(|s| Decimal::from_str(s.trim()).expect("Failed to parse odds as Decimal"))
+                .collect();
+        
+            assert_eq!(outcomes.len(), odds.len(), "Number of odds should match the number of outcomes.");
             
             let mut outcome_tokens = Vec::new();
             for _ in &outcomes {
