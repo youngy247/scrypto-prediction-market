@@ -56,26 +56,9 @@ mod prediction_market {
         }
         
 
-        pub fn resolve_market(&mut self, winning_outcome: u32) -> Vec<(String, Decimal)> {
-            if (winning_outcome as usize) < self.outcome_tokens.len() {
-                let mut rewards = Vec::new();
-                for (index, outcome_token) in self.outcome_tokens.iter_mut().enumerate() {
-                    let bet_amount: Bucket = outcome_token.take_all();
-                    let outcome = &self.outcomes[index];
-                    let reward = if index == winning_outcome as usize {
-                        self.total_staked.clone()
-                    } else {
-                        Decimal::from(bet_amount.amount())
-                    };
-                    rewards.push((outcome.clone(), reward));
-                }
-                for t in &mut self.outcome_tokens {
-                    drop(t.take_all());
-                }
-                self.total_staked = Decimal::from(0);
-                return rewards;
-            }
-            Vec::new()
+        pub fn deposit_to_xrd_vault(&mut self, deposit: Bucket) {
+
+            self.xrd_vault.put(deposit);
         }
 
         pub fn deposit(&mut self, account_id: String, payment: Bucket) -> Result<(), String> {
