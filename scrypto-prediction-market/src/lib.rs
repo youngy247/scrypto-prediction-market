@@ -53,7 +53,7 @@ mod prediction_market {
 
         pub fn get_outcome_balance(&self, outcome: String) -> Decimal {
             assert!(self.outcomes.contains(&outcome), "Outcome does not exist.");
-        
+            
             let index = self.outcomes.iter().position(|o| o == &outcome).expect("Outcome not found.");
             Decimal::from(self.outcome_tokens[index].amount())
         }
@@ -76,11 +76,11 @@ mod prediction_market {
 
             match self.outcomes.iter().position(|o| o == &outcome) {
                 Some(index) => {
-                let outcome_token = &mut self.outcome_tokens[index];
-                outcome_token.put(payment);
-                self.total_staked += bet_amount;
+                    let outcome_token = &mut self.outcome_tokens[index];
+                    outcome_token.put(payment);
+                    self.total_staked += bet_amount;
 
-                self.bets.push((user_hash, outcome, bet_amount));  // Record the bet
+                    self.bets.push((user_hash, outcome, bet_amount));  // Record the bet
                     Ok(())
                 },
                 None => Err("Outcome not found.".to_string())
@@ -96,11 +96,11 @@ mod prediction_market {
             Decimal::from(self.xrd_vault.amount())
         }
 
-        pub fn resolve_market(&mut self, winning_outcome: u32) -> Vec<(String, Decimal)> {
-            println!("Resolving market for winning outcome: {}", winning_outcome);
-        
+        pub fn resolve_market(&mut self, winning_outcome: u32) -> Result<Vec<(String, Decimal)>, String> {
             assert!((winning_outcome as usize) < self.outcome_tokens.len(), "Winning outcome is out of bounds.");
+            assert!(!self.market_resolved, "Market has already been resolved.");
 
+            println!("Resolving market for winning outcome: {}", winning_outcome);
         
             let mut rewards = Vec::new();
         
@@ -155,7 +155,8 @@ mod prediction_market {
             self.total_staked = Decimal::from(0);
             println!("Reset total staked to 0.");
         
-            rewards
+            self.market_resolved = true; 
+            Ok(rewards)
         }
 
         // Add a new method for users to claim their rewards from their vaults.
