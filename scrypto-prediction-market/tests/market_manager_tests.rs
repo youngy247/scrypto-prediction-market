@@ -97,8 +97,56 @@ fn test_retrieve_prediction_market() -> Result<(), RuntimeError> {
     Ok(())
 }
 
+#[test]
+fn test_list_all_markets() -> Result<(), RuntimeError> {
+    let mut test_runner = TestRunnerBuilder::new().build();
+    let (public_key, _, _) = test_runner.new_allocated_account();
+    let package_address = test_runner.compile_and_publish(this_package!());
 
-  
+    let instantiate_manifest = ManifestBuilder::new()
+        .call_function(
+            package_address,
+            "MarketManager",
+            "new",
+            manifest_args!(),
+        )
+        .build();
+    let instantiate_receipt = test_runner.execute_manifest_ignoring_fee(instantiate_manifest, vec![NonFungibleGlobalId::from_public_key(&public_key)]);
+    let market_manager_component = instantiate_receipt.expect_commit(true).new_component_addresses()[0];
+
+    let market_ids = vec!["market1", "market2", "market3"];
+    for market_id in &market_ids {
+        let act_manifest = ManifestBuilder::new()
+            .call_method(
+                market_manager_component,
+                "instantiate_prediction_market",
+                manifest_args!(market_id.to_string(), "outcome1,outcome2", "1.5,2.5"),
+            )
+            .build();
+        let act_receipt = test_runner.execute_manifest_ignoring_fee(act_manifest, vec![NonFungibleGlobalId::from_public_key(&public_key)]);
+        act_receipt.expect_commit_success();
+    }
+
+    // Act: Call `list_all_markets` method
+    let list_markets_manifest = ManifestBuilder::new()
+        .call_method(
+            market_manager_component,
+            "list_all_markets",
+            manifest_args!(),
+        )
+        .build();
+
+    let list_markets_receipt = test_runner.execute_manifest_ignoring_fee(list_markets_manifest, vec![NonFungibleGlobalId::from_public_key(&public_key)]);
+    list_markets_receipt.expect_commit_success();
+
+    // Extract the list of market ids from the receipt
+    let mut returned_market_ids: Vec<String> = list_markets_receipt.expect_commit_success().output(1);
+    let mut expected_market_ids = market_ids.clone();
+
+    returned_market_ids.sort();
+    expected_market_ids.sort();
+
+    assert_eq!(expected_market_ids, returned_market_ids);
+
     Ok(())
 }
-
