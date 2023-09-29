@@ -3,7 +3,7 @@ use scrypto_test::prelude::*;
 use scrypto_unit::TestRunnerBuilder;
 
 #[test]
-fn test_instantiate_and_get_market() -> Result<(), RuntimeError> {
+fn test_instantiate_prediction_market() -> Result<(), RuntimeError> {
     // Set up environment.
     let mut test_runner = TestRunnerBuilder::new().build();
 
@@ -35,11 +35,14 @@ fn test_instantiate_and_get_market() -> Result<(), RuntimeError> {
         .call_method(
             market_manager_component,
             "instantiate_prediction_market",
-            manifest_args!(market_id.clone(), outcomes_str, odds_str),
+            manifest_args!(market_id.clone(), outcomes_str.clone(), odds_str.clone()),
         )
         .build();
     let act_receipt = test_runner.execute_manifest_ignoring_fee(act_manifest, vec![NonFungibleGlobalId::from_public_key(&public_key)]);
     act_receipt.expect_commit_success();
+
+    Ok(())
+}
 
 #[test]
 fn test_retrieve_prediction_market() -> Result<(), RuntimeError> {
