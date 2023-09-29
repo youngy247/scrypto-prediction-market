@@ -177,9 +177,16 @@ mod prediction_market {
         }
         
 
-        // Add a new method for users to claim their rewards from their vaults.
         pub fn claim_reward(&mut self, user_hash: String) -> Option<Bucket> {
-            self.user_vaults.get_mut(&user_hash).map(|vault| vault.take_all())
+            // Attempt to get a mutable reference to the user's vault using the provided user_hash.
+            // The map method is used to access the user's vault if it exists.
+            self.user_vaults.get_mut(&user_hash).map(|vault| {
+                // If the user's vault exists, take all tokens from the vault as the reward.
+                // The take_all method returns a Bucket containing all the tokens from the vault.
+                vault.take_all()
+            })
+            // If the user's vault does not exist, the map method will return None,
+            // and so will the claim_reward function.
         }
     
     }        
