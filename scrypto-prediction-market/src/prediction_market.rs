@@ -13,7 +13,6 @@ mod prediction_market {
         market_resolved: bool,
     }
 
-
     impl PredictionMarket {
         pub fn instantiate_prediction_market(outcomes_str: String, odds_str: String) -> Global<PredictionMarket> {
             let outcomes: Vec<String> = outcomes_str.split(',').map(|s| s.trim().to_string()).collect();
@@ -97,18 +96,23 @@ mod prediction_market {
         }
 
         pub fn resolve_market(&mut self, winning_outcome: u32) -> Result<Vec<(String, Decimal)>, String> {
+            // Check if the winning_outcome is within the valid range of outcomes.
             assert!((winning_outcome as usize) < self.outcome_tokens.len(), "Winning outcome is out of bounds.");
+            // Ensure the market hasn't been resolved before.
             assert!(!self.market_resolved, "Market has already been resolved.");
-
+        
             println!("Resolving market for winning outcome: {}", winning_outcome);
         
+            // Initialize an empty vector to store the rewards for each user.
             let mut rewards = Vec::new();
         
+            // Iterate through each outcome's vault to process losing vaults.
             for (index, outcome_vault) in self.outcome_tokens.iter_mut().enumerate() {
                 if index == winning_outcome as usize {
-                    continue; // Skip the winning vault for now
+                    continue; // Skip the winning vault for now as we don't want to transfer tokens from it.
                 }
         
+                // Take all tokens from the losing vault.
                 let tokens = outcome_vault.take_all();
                 println!("Tokens taken from losing vault {}: {:?}", index, tokens);
         
@@ -116,48 +120,51 @@ mod prediction_market {
                 self.xrd_vault.put(tokens);
             }
         
-            // Print the total amount now in the xrd_vault
+            // Display the total amount now in the xrd_vault after transferring tokens from losing vaults.
             println!("Total amount in xrd_vault after transferring from losing vaults: {}", self.xrd_vault.amount());
         
-            // The total amount staked for the winning outcome.
+            // Get the total amount staked for the winning outcome.
             let total_winning_staked = self.outcome_tokens[winning_outcome as usize].amount();
             println!("Total amount staked for the winning outcome {}: {}", winning_outcome, total_winning_staked);
         
+            // Iterate through each bet to calculate rewards for users who bet on the winning outcome.
             for (user, bet_outcome, bet_amt) in &self.bets {
                 if bet_outcome == &self.outcomes[winning_outcome as usize] {
-                    // Calculate the user's proportion of the total staked amount for the winning outcome
+                    // Calculate the user's proportion of the total staked amount for the winning outcome.
                     let user_proportion = *bet_amt / total_winning_staked;
         
-                    // Print user's proportion
+                    // Display the user's proportion of the total winning stake.
                     println!("User {} proportion of total winning stake: {}", user, user_proportion);
         
-                    // Calculate the reward based on the odds and the user's proportion of the winning stake
+                    // Calculate the reward based on the odds and the user's proportion of the winning stake.
                     let user_reward = *bet_amt * self.odds[winning_outcome as usize];
-                    
-                    // Print calculated reward for the user
+        
+                    // Display the calculated reward for the user.
                     println!("Calculated reward for user {}: {}", user, user_reward);
         
+                    // Store the user and their reward in the rewards vector.
                     rewards.push((user.clone(), user_reward));
-                    
-                    // Extract reward from xrd_vault
+        
+                    // Extract the reward from the xrd_vault.
                     let reward_bucket = self.xrd_vault.take(user_reward);
         
-                    // TODO: Transfer reward_bucket to the user's vault or account. You'll need a mechanism to do this based on user_hash.
-                    // Ideally, you'll use something like `user_vault.put(reward_bucket)`;
-        
-                    // Transfer reward_bucket to the user's vault using the HashMap.
+                    // Transfer the reward to the user's vault.
                     if let Some(user_vault) = self.user_vaults.get_mut(user) {
                         user_vault.put(reward_bucket);
                     }
                 }
             }
         
+            // Reset the total_staked amount to 0 as the market is now resolved.
             self.total_staked = Decimal::from(0);
             println!("Reset total staked to 0.");
         
-            self.market_resolved = true; 
+            // Mark the market as resolved to prevent further interactions.
+            self.market_resolved = true;
+            // Return the rewards vector as the result of the function.
             Ok(rewards)
         }
+        
 
         // Add a new method for users to claim their rewards from their vaults.
         pub fn claim_reward(&mut self, user_hash: String) -> Option<Bucket> {
