@@ -59,32 +59,43 @@ mod prediction_market {
         
 
         pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) -> Result<(), String> {
+            // Check if the market has already been resolved.
             if self.market_resolved {
                 return Err("Market has already been resolved.".to_string());
             }
-            
+        
+            // Obtain the amount being bet from the payment Bucket.
             let bet_amount = payment.amount();
+            // Validate the bet amount is greater than zero.
             if bet_amount <= Decimal::from(0) {
                 return Err("Invalid bet amount.".to_string());
             }
-
-            // Check if user has a vault, if not create one.
+        
+            // Check if a vault exists for the user, if not, create a new one.
             if !self.user_vaults.contains_key(&user_hash) {
                 self.user_vaults.insert(user_hash.clone(), Vault::new(XRD));
             }
-
+        
+            // Search for the specified outcome in the list of market outcomes.
             match self.outcomes.iter().position(|o| o == &outcome) {
+                // If the outcome exists, process the bet.
                 Some(index) => {
+                    // Get a mutable reference to the vault associated with the outcome.
                     let outcome_token = &mut self.outcome_tokens[index];
+                    // Deposit the payment into the outcome's vault.
                     outcome_token.put(payment);
+                    // Update the total amount staked in the market.
                     self.total_staked += bet_amount;
-
-                    self.bets.push((user_hash, outcome, bet_amount));  // Record the bet
+        
+                    // Record the bet by storing the user's hash, selected outcome, and bet amount.
+                    self.bets.push((user_hash, outcome, bet_amount));
+                    // Return Ok to indicate the bet was successfully placed.
                     Ok(())
                 },
+                // If the outcome does not exist, return an error.
                 None => Err("Outcome not found.".to_string())
             }
-        }
+        }        
 
         pub fn deposit_to_xrd_vault(&mut self, deposit: Bucket) {
 
