@@ -1,68 +1,54 @@
-// use radix_engine_interface::prelude::*;
-// use scrypto::this_package;
-// use scrypto_test::prelude::*;
-// use scrypto_unit::*;
+use scrypto::prelude::*;
+use scrypto_test::prelude::*;
+use scrypto_unit::TestRunnerBuilder;
 
-// use scrypto_prediction_market::test_bindings::*;
+#[test]
+fn test_instantiate_prediction_market() -> Result<(), RuntimeError> {
+    // Set up environment.
+    let mut test_runner = TestRunnerBuilder::new().build();
 
-// #[test]
-// fn test_hello() {
-//     // Setup the environment
-//     let mut test_runner = TestRunnerBuilder::new().build();
+    // Create an account
+    let (public_key, _private_key, account_component) = test_runner.new_allocated_account();
 
-//     // Create an account
-//     let (public_key, _private_key, account) = test_runner.new_allocated_account();
+    // Publish package
+    let package_address = test_runner.compile_and_publish(this_package!());
 
-//     // Publish package
-//     let package_address = test_runner.compile_and_publish(this_package!());
+    // Define outcomes and odds
+    let outcomes_str = "outcome1,outcome2".to_string();
+    let odds_str = "2,3".to_string();
 
-//     // Test the `instantiate_hello` function.
-//     let manifest = ManifestBuilder::new()
-//         .call_function(
-//             package_address,
-//             "Hello",
-//             "instantiate_hello",
-//             manifest_args!(),
-//         )
-//         .build();
-//     let receipt = test_runner.execute_manifest_ignoring_fee(
-//         manifest,
-//         vec![NonFungibleGlobalId::from_public_key(&public_key)],
-//     );
-//     println!("{:?}\n", receipt);
-//     let component = receipt.expect_commit(true).new_component_addresses()[0];
-
-//     // Test the `free_token` method.
-//     let manifest = ManifestBuilder::new()
-//         .call_method(component, "free_token", manifest_args!())
-//         .call_method(
-//             account,
-//             "deposit_batch",
-//             manifest_args!(ManifestExpression::EntireWorktop),
-//         )
-//         .build();
-//     let receipt = test_runner.execute_manifest_ignoring_fee(
-//         manifest,
-//         vec![NonFungibleGlobalId::from_public_key(&public_key)],
-//     );
-//     println!("{:?}\n", receipt);
-//     receipt.expect_commit_success();
-// }
-
-// #[test]
-// fn test_hello_with_test_environment() -> Result<(), RuntimeError> {
-//     // Arrange
-//     let mut env = TestEnvironment::new();
-//     let package_address = Package::compile_and_publish(this_package!(), &mut env)?;
-
-//     let mut hello = Hello::instantiate_hello(package_address, &mut env)?;
-
-//     // Act
-//     let bucket = hello.free_token(&mut env)?;
-
-//     // Assert
-//     let amount = bucket.amount(&mut env)?;
-//     assert_eq!(amount, dec!("1"));
-
-//     Ok(())
-// }
+    // Instantiate the PredictionMarket via a Manifest
+    let manifest1 = ManifestBuilder::new()
+        .call_function(
+            package_address,
+            "PredictionMarket",
+            "instantiate_prediction_market",
+            manifest_args!(outcomes_str, odds_str),
+        )
+        .call_method(
+          account_component,
+          "deposit_batch",
+          manifest_args!(ManifestExpression::EntireWorktop),
+      )
+        .build();
+    
+        let receipt1 = test_runner.execute_manifest_ignoring_fee(
+          manifest1,
+          vec![NonFungibleGlobalId::from_public_key(&public_key)],
+      );
+      println!("{:?}\n", receipt1);
+      receipt1.expect_commit_success();
+    
+    // ... [If needed to use the badge later]
+    // let use_badge_manifest = ManifestBuilder::new()
+    //     .create_proof_from_account_of_amount(_account_component, admin_badge, dec!("1"))
+    //     .call_method(prediction_market_component, "some_admin_method", manifest_args!())
+    //     .build();
+    // let use_badge_receipt = test_runner.execute_manifest_ignoring_fee(
+    //     use_badge_manifest,
+    //     vec![NonFungibleGlobalId::from_public_key(&public_key)],
+    // );
+    // use_badge_receipt.expect_commit_success();
+    
+    Ok(())
+}
