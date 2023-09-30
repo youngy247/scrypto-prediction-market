@@ -19,9 +19,11 @@ mod market_manager {
         }
 
         pub fn instantiate_prediction_market(&mut self, market_id: String, outcomes_str: String, odds_str: String) {
-            let market = PredictionMarket::instantiate_prediction_market(outcomes_str, odds_str);
+            let (market, _admin_badge) = PredictionMarket::instantiate_prediction_market(outcomes_str, odds_str);
             self.markets.insert(market_id, market);
-        }        
+            // If owner_badge is needed for something do it here in future.
+        }
+                
         
         pub fn get_market(&self, market_id: String) -> Option<Global<PredictionMarket>> {
             self.markets.get(&market_id).cloned()
