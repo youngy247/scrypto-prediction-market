@@ -1,0 +1,1 @@
+/Users/adam/Desktop/Triage/scrypto-prediction-market/scrypto-prediction-market/flat-admin/target/wasm32-unknown-unknown/release/libflat_admin.rlib: /Users/adam/Desktop/Triage/scrypto-prediction-market/scrypto-prediction-market/flat-admin/src/lib.rs
