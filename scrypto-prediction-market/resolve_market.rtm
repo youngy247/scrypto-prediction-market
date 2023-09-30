@@ -10,6 +10,6 @@ CALL_METHOD
     Decimal("1");  
 
 CALL_METHOD
-    Address("${component}")   
+    Address("${market}")   
     "resolve_market"
     0u32; 
