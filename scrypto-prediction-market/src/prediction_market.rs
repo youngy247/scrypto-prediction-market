@@ -2,6 +2,22 @@ use scrypto::prelude::*;
 
 #[blueprint]
 mod prediction_market {
+    enable_method_auth! {
+        roles {
+            admin => updatable_by: [];
+        },
+        methods {
+            resolve_market => restrict_to: [admin]; 
+            claim_reward => PUBLIC;
+            deposit_to_xrd_vault => PUBLIC;
+            list_outcomes => PUBLIC;
+            get_total_staked => PUBLIC;
+            get_outcome_balance => PUBLIC;
+            place_bet => PUBLIC;
+            get_xrd_vault_balance => PUBLIC;
+        }
+    }
+    
     pub struct PredictionMarket {
         outcome_tokens: Vec<Vault>,
         outcomes: Vec<String>,
@@ -14,7 +30,7 @@ mod prediction_market {
     }
 
     impl PredictionMarket {
-        pub fn instantiate_prediction_market(outcomes_str: String, odds_str: String) -> Global<PredictionMarket> {
+        pub fn instantiate_prediction_market(outcomes_str: String, odds_str: String) -> (Global<PredictionMarket>, FungibleBucket) {
             let outcomes: Vec<String> = outcomes_str.split(',').map(|s| s.trim().to_string()).collect();
             let odds: Vec<Decimal> = odds_str.split(',')
                 .map(|s| Decimal::from_str(s.trim()).expect("Failed to parse odds as Decimal"))
@@ -26,8 +42,14 @@ mod prediction_market {
             for _ in &outcomes {
                 outcome_tokens.push(Vault::new(XRD)); // Create a new XRD vault for each outcome
             }
+
+            let admin_badge = ResourceBuilder::new_fungible(OwnerRole::None) // #1
+            .metadata(metadata!(init{"name"=>"admin badge", locked;}))
+            .divisibility(DIVISIBILITY_NONE)
+            .mint_initial_supply(1);
+
             
-            Self {
+            let component = Self {
                 outcome_tokens,
                 outcomes,
                 odds,  
@@ -39,7 +61,16 @@ mod prediction_market {
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
-            .globalize()
+            .roles(roles!(
+                admin => rule!(require(admin_badge.resource_address()));
+            ))
+            .globalize();
+
+            // Return the component address and the owner_badge
+            (
+                component,
+                admin_badge
+            )
         }
         
         pub fn list_outcomes(&self) -> Vec<String> {
