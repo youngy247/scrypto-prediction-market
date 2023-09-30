@@ -1,0 +1,15 @@
+CALL_METHOD
+    Address("${account}")   
+    "lock_fee"
+    Decimal("100");  
+
+CALL_METHOD
+    Address("${account}")
+    "create_proof_of_amount"
+    Address("${badge}")   
+    Decimal("1");  
+
+CALL_METHOD
+    Address("${component}")   
+    "resolve_market"
+    0u32; 
