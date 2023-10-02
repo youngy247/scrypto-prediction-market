@@ -8,6 +8,7 @@ mod prediction_market {
         },
         methods {
             resolve_market => restrict_to: [admin]; 
+            resolve_market_as_void => restrict_to: [admin];
             claim_reward => PUBLIC;
             deposit_to_xrd_vault => PUBLIC;
             list_outcomes => PUBLIC;
@@ -16,7 +17,6 @@ mod prediction_market {
             place_bet => PUBLIC;
             get_xrd_vault_balance => PUBLIC;
             get_market_details => PUBLIC;
-            resolve_market_as_void => PUBLIC;
         }
     }
     
