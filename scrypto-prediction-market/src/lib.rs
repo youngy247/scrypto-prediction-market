@@ -19,6 +19,7 @@ mod prediction_market {
     }
     
     pub struct PredictionMarket {
+        title: String,
         outcome_tokens: Vec<Vault>,
         outcomes: Vec<String>,
         odds: Vec<Decimal>,   
@@ -30,7 +31,7 @@ mod prediction_market {
     }
 
     impl PredictionMarket {
-        pub fn instantiate_prediction_market(outcomes_str: String, odds_str: String) -> (Global<PredictionMarket>, FungibleBucket) {
+        pub fn instantiate_prediction_market(title: String, outcomes_str: String, odds_str: String) -> (Global<PredictionMarket>, FungibleBucket) {
             let outcomes: Vec<String> = outcomes_str.split(',').map(|s| s.trim().to_string()).collect();
             let odds: Vec<Decimal> = odds_str.split(',')
                 .map(|s| Decimal::from_str(s.trim()).expect("Failed to parse odds as Decimal"))
@@ -50,6 +51,7 @@ mod prediction_market {
 
             
             let component = Self {
+                title,
                 outcome_tokens,
                 outcomes,
                 odds,  
@@ -72,6 +74,7 @@ mod prediction_market {
                 admin_badge
             )
         }
+
         
         pub fn list_outcomes(&self) -> Vec<String> {
             self.outcomes.clone()
