@@ -40,12 +40,35 @@ mod prediction_market {
         pub fn instantiate_prediction_market(title: String, outcomes_str: String, odds_str: String, min_bet: Decimal, 
           max_bet: Decimal
   ) -> (Global<PredictionMarket>, FungibleBucket) {
+
             let outcomes: Vec<String> = outcomes_str.split(',').map(|s| s.trim().to_string()).collect();
+            // Validate Uniqueness of Outcomes
+            let unique_outcomes: HashSet<&str> = outcomes_str.split(',').collect();
+            assert_eq!(
+                unique_outcomes.len(),
+                outcomes.len(),
+                "Duplicate outcomes provided."
+            );
+
+
             let odds: Vec<Decimal> = odds_str.split(',')
                 .map(|s| Decimal::from_str(s.trim()).expect("Failed to parse odds as Decimal"))
                 .collect();
+
+              // Validate Odds
+                for odd in &odds {
+                  assert!(
+                      *odd > Decimal::from(1),
+                      "Odds must be greater than 1. Provided: {}",
+                      odd
+                  );
+              }
         
-                assert_eq!(outcomes.len(), odds.len(), "The number of odds provided does not match the number of outcomes.");
+              assert_eq!(
+                outcomes.len(),
+                odds.len(),
+                "The number of odds provided does not match the number of outcomes."
+            );
         
             let mut outcome_tokens = Vec::new();
             for _ in &outcomes {
