@@ -52,3 +52,49 @@ fn test_instantiate_prediction_market() -> Result<(), RuntimeError> {
     
     Ok(())
 }
+
+#[test]
+fn test_list_outcomes() -> Result<(), RuntimeError> {
+    let mut test_runner = TestRunnerBuilder::new().build();
+    let (public_key, _private_key, account_component) = test_runner.new_allocated_account();
+    let package_address = test_runner.compile_and_publish(this_package!());
+
+    // Instantiate the PredictionMarket
+    let outcomes_str = "outcome1,outcome2".to_string();
+    let odds_str = "2,3".to_string();
+    let manifest = ManifestBuilder::new()
+        .call_function(
+            package_address,
+            "PredictionMarket",
+            "instantiate_prediction_market",
+            manifest_args!(outcomes_str.clone(), odds_str.clone()),
+        )
+        .call_method(
+          account_component,
+          "deposit_batch",
+          manifest_args!(ManifestExpression::EntireWorktop),
+      )
+        .build();
+    let receipt = test_runner.execute_manifest_ignoring_fee(manifest, vec![NonFungibleGlobalId::from_public_key(&public_key)]);
+    let market_address = receipt.expect_commit(true).new_component_addresses()[0];
+
+    // Call the list_outcomes method
+    let list_outcomes_manifest = ManifestBuilder::new()
+        .call_method(
+            market_address,
+            "list_outcomes",
+            manifest_args!(),
+        )
+        .build();
+
+    let list_outcomes_receipt = test_runner.execute_manifest_ignoring_fee(list_outcomes_manifest, vec![NonFungibleGlobalId::from_public_key(&public_key)]);
+    list_outcomes_receipt.expect_commit_success();
+
+    // Extract the list of outcomes from the receipt
+    let outcomes: Vec<String> = list_outcomes_receipt.expect_commit_success().output(1);
+
+    // Assert the outcomes
+    assert_eq!(outcomes, outcomes_str.split(',').map(|s| s.trim().to_string()).collect::<Vec<_>>());
+
+    Ok(())
+}
