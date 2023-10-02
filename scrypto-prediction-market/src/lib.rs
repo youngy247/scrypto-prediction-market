@@ -69,6 +69,20 @@ mod prediction_market {
                 odds.len(),
                 "The number of odds provided does not match the number of outcomes."
             );
+
+              // Validate Min and Max Bet
+              assert!(
+                min_bet > Decimal::from(5),
+                "Minimum bet must be greater than 0. Provided: {}",
+                min_bet
+              );
+
+              assert!(
+                max_bet > min_bet,
+                "Maximum bet must be greater than the minimum bet. Provided: Max bet: {}, Min bet: {}",
+                max_bet, min_bet
+              );
+
         
             let mut outcome_tokens = Vec::new();
             for _ in &outcomes {
