@@ -38,7 +38,7 @@ mod prediction_market {
                 .map(|s| Decimal::from_str(s.trim()).expect("Failed to parse odds as Decimal"))
                 .collect();
         
-            assert_eq!(outcomes.len(), odds.len(), "Number of odds should match the number of outcomes.");
+                assert_eq!(outcomes.len(), odds.len(), "The number of odds provided does not match the number of outcomes.");
         
             let mut outcome_tokens = Vec::new();
             for _ in &outcomes {
