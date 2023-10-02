@@ -16,6 +16,7 @@ mod prediction_market {
             place_bet => PUBLIC;
             get_xrd_vault_balance => PUBLIC;
             get_market_details => PUBLIC;
+            resolve_market_as_void => PUBLIC;
         }
     }
     
@@ -235,9 +236,44 @@ mod prediction_market {
           // Return the rewards vector as the result of the function.
           Ok(rewards)
       }
-      
-        
 
+      pub fn resolve_market_as_void(&mut self) -> Result<(), String> {
+        // Ensure the market hasn't been resolved before.
+        assert!(!self.market_resolved, "Market has already been resolved.");
+    
+        // Iterate through each outcome's vault.
+        for outcome_vault in &mut self.outcome_tokens {
+            // Take all tokens from the outcome vault.
+            let tokens = outcome_vault.take_all();
+    
+            // Transfer tokens from outcome vaults to the xrd_vault.
+            self.xrd_vault.put(tokens);
+        }
+    
+        // Iterate over all the user bets and refund them.
+        for (_, outcome_bets) in &self.bets {
+            for (user, bet_amt) in outcome_bets {
+                // Extract the refund amount from the xrd_vault.
+                let refund_bucket = self.xrd_vault.take(*bet_amt);
+    
+                // Transfer the refund to the user's vault.
+                if let Some(user_vault) = self.user_vaults.get_mut(user) {
+                    user_vault.put(refund_bucket);
+                }
+            }
+        }
+    
+        // Reset the total_staked amount to 0 as the market is now resolved.
+        self.total_staked = Decimal::from(0);
+    
+        // Mark the market as resolved to prevent further interactions.
+        self.market_resolved = true;
+    
+        // Return Ok to indicate the market was successfully resolved as void.
+        Ok(())
+    }
+    
+      
         pub fn claim_reward(&mut self, user_hash: String) -> Option<Bucket> {
             // Attempt to get a mutable reference to the user's vault using the provided user_hash.
             // The map method is used to access the user's vault if it exists.
