@@ -250,58 +250,21 @@ mod prediction_market {
       }
 
       // 3. Betting and Claiming Rewards:
-      pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) -> Result<(), String> {
+      pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) {
         // Ensure the market hasn't been resolved before.
         self.ensure_market_not_resolved();
     
-        // Assert the market is not locked.
-        assert!(
-            !self.market_locked, 
-            "Market '{}' is locked. No more bets can be placed.", 
-            self.title
-        );
+        // Validate the bet.
+        self.validate_bet(&payment);
     
-        // Assert bet is within the allowed range.
-        assert!(payment.amount() >= self.min_bet, 
-        "Bet amount {} is below the minimum allowed of {}.", 
-        payment.amount(), self.min_bet);
+        // Get the outcome's position.
+        let outcome_position = self.get_outcome_position(&outcome);
     
-        assert!(payment.amount() <= self.max_bet, 
-        "Bet amount {} exceeds the maximum allowed of {}.", 
-        payment.amount(), self.max_bet);
+        // Ensure user vault exists.
+        self.ensure_user_vault_exists(user_hash.clone());
     
-        // Obtain the amount being bet from the payment Bucket.
-        let bet_amount = payment.amount();
-        // Validate the bet amount is greater than zero.
-        if bet_amount <= Decimal::from(0) {
-            return Err("Invalid bet amount.".to_string());
-        }
-    
-        // Assert that the outcome exists.
-        let outcome_position = self.outcomes.iter().position(|o| o == &outcome)
-        .expect(&format!("Outcome '{}' does not exist. The available outcomes are: {:?}", outcome, self.outcomes));
-
-
-        // Check if a vault exists for the user, if not, create a new one.
-        if !self.user_vaults.contains_key(&user_hash) {
-            self.user_vaults.insert(user_hash.clone(), Vault::new(XRD));
-        }
-    
-        // Now that we know the outcome exists, and the bet amount is valid, we can process the bet.
-        
-        // Get a mutable reference to the vault associated with the outcome.
-        let outcome_token = &mut self.outcome_tokens[outcome_position];
-        // Deposit the payment into the outcome's vault.
-        outcome_token.put(payment);
-        // Update the total amount staked in the market.
-        self.total_staked += bet_amount;
-    
-        // Record the bet by storing the user's hash and bet amount under the outcome in the bets HashMap.
-        let outcome_bets = self.bets.entry(outcome).or_insert_with(Vec::new);
-        outcome_bets.push((user_hash, bet_amount));
-    
-        // Return Ok to indicate the bet was successfully placed.
-        Ok(())
+        // Process the bet.
+        self.process_bet(user_hash, outcome_position, payment.amount(), payment);
     }
 
     pub fn claim_reward(&mut self, user_hash: String) -> Option<Bucket> {
@@ -343,6 +306,63 @@ mod prediction_market {
         fn ensure_market_not_resolved(&self) {
           assert!(!self.market_resolved, "Market '{}' has already been resolved.", self.title);
       }
+
+        fn ensure_user_vault_exists(&mut self, user_hash: String) {
+          // Check if a vault exists for the user, if not, create a new one.
+          if !self.user_vaults.contains_key(&user_hash) {
+              self.user_vaults.insert(user_hash.clone(), Vault::new(XRD));
+          }
+      }
+
+        // Validate the bet using assertions.
+        fn validate_bet(&self, payment: &Bucket) {
+          // Assert the market is not locked.
+          assert!(
+              !self.market_locked, 
+              "Market '{}' is locked. No more bets can be placed.", 
+              self.title
+          );
+          
+          let bet_amount = payment.amount();
+          
+          assert!(
+              bet_amount >= self.min_bet,
+              "Bet amount {} is below the minimum allowed of {}.", 
+              bet_amount, self.min_bet
+          );
+          
+          assert!(
+              bet_amount <= self.max_bet, 
+              "Bet amount {} exceeds the maximum allowed of {}.", 
+              bet_amount, self.max_bet
+          );
+
+          assert!(
+              bet_amount > Decimal::from(0),
+              "Invalid bet amount."
+          );
+        }
+
+        // Process the bet.
+        fn process_bet(&mut self, user_hash: String, outcome_position: usize, bet_amount: Decimal, payment: Bucket) {
+          // Get a mutable reference to the vault associated with the outcome.
+          let outcome_token = &mut self.outcome_tokens[outcome_position];
+          // Deposit the payment into the outcome's vault.
+          outcome_token.put(payment);
+          // Update the total amount staked in the market.
+          self.total_staked += bet_amount;
+          // Record the bet.
+          let outcome = &self.outcomes[outcome_position];
+          let outcome_bets = self.bets.entry(outcome.clone()).or_insert_with(Vec::new);
+          outcome_bets.push((user_hash, bet_amount));
+        }
+
+        // Get outcome position using assertion
+      fn get_outcome_position(&self, outcome: &String) -> usize {
+        self.outcomes.iter().position(|o| o == outcome)
+            .expect(&format!("Outcome '{}' does not exist. The available outcomes are: {:?}", outcome, self.outcomes))
+      }
+    
 
     }        
 }
