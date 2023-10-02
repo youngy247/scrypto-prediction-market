@@ -74,8 +74,8 @@ mod prediction_market {
 
               // Validate Min and Max Bet
               assert!(
-                min_bet > Decimal::from(5),
-                "Minimum bet must be greater than 0. Provided: {}",
+                min_bet >= Decimal::from(5),
+                "Minimum bet must be atleast 5. Provided: {}",
                 min_bet
               );
 
@@ -253,7 +253,7 @@ mod prediction_market {
       pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) {
         // Ensure the market hasn't been resolved before.
         self.ensure_market_not_resolved();
-    
+        
         // Validate the bet.
         self.validate_bet(&payment);
     
