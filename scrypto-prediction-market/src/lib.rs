@@ -9,6 +9,7 @@ mod prediction_market {
         methods {
             resolve_market => restrict_to: [admin]; 
             resolve_market_as_void => restrict_to: [admin];
+            lock_market => restrict_to: [admin];
             claim_reward => PUBLIC;
             deposit_to_xrd_vault => PUBLIC;
             list_outcomes => PUBLIC;
@@ -32,6 +33,7 @@ mod prediction_market {
         xrd_vault: Vault,
         user_vaults: HashMap<String, Vault>,
         market_resolved: bool,
+        market_locked: bool,
     }
 
     impl PredictionMarket {
@@ -67,7 +69,8 @@ mod prediction_market {
                 bets: HashMap::new(),
                 xrd_vault: Vault::new(XRD),
                 user_vaults: HashMap::new(),
-                market_resolved: false
+                market_resolved: false,
+                market_locked: false,
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
@@ -82,6 +85,11 @@ mod prediction_market {
                 admin_badge
             )
         }
+
+        // Locks the market to prevent further bets.
+          pub fn lock_market(&mut self) {
+            self.market_locked = true;
+          }
 
         
         pub fn list_outcomes(&self) -> Vec<String> {
@@ -104,12 +112,20 @@ mod prediction_market {
             Decimal::from(self.outcome_tokens[index].amount())
         }
         
+        fn ensure_market_not_resolved(&self) {
+          assert!(!self.market_resolved, "Market '{}' has already been resolved.", self.title);
+      }
 
         pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) -> Result<(), String> {
-          // Check if the market has already been resolved.
-          if self.market_resolved {
-              return Err("Market has already been resolved.".to_string());
-          }
+           // Ensure the market hasn't been resolved before.
+            self.ensure_market_not_resolved();
+
+          // Assert the market is not locked.
+          assert!(
+            !self.market_locked, 
+            "Market '{}' is locked. No more bets can be placed.", 
+            self.title
+          );
       
           // Assert bet is within the allowed range.
           assert!(payment.amount() >= self.min_bet, 
@@ -169,7 +185,7 @@ mod prediction_market {
           // Check if the winning_outcome is within the valid range of outcomes.
           assert!((winning_outcome as usize) < self.outcome_tokens.len(), "Winning outcome is out of bounds.");
           // Ensure the market hasn't been resolved before.
-          assert!(!self.market_resolved, "Market has already been resolved.");
+          self.ensure_market_not_resolved();
       
           println!("Resolving market for winning outcome: {}", winning_outcome);
       
@@ -239,7 +255,7 @@ mod prediction_market {
 
       pub fn resolve_market_as_void(&mut self) -> Result<(), String> {
         // Ensure the market hasn't been resolved before.
-        assert!(!self.market_resolved, "Market has already been resolved.");
+        self.ensure_market_not_resolved();
     
         // Iterate through each outcome's vault.
         for outcome_vault in &mut self.outcome_tokens {
