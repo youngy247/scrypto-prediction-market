@@ -21,6 +21,8 @@ mod prediction_market {
     
     pub struct PredictionMarket {
         title: String,
+        min_bet: Decimal,
+        max_bet: Decimal,
         outcome_tokens: Vec<Vault>,
         outcomes: Vec<String>,
         odds: Vec<Decimal>,   
@@ -32,7 +34,9 @@ mod prediction_market {
     }
 
     impl PredictionMarket {
-        pub fn instantiate_prediction_market(title: String, outcomes_str: String, odds_str: String) -> (Global<PredictionMarket>, FungibleBucket) {
+        pub fn instantiate_prediction_market(title: String, outcomes_str: String, odds_str: String, min_bet: Decimal, 
+          max_bet: Decimal
+  ) -> (Global<PredictionMarket>, FungibleBucket) {
             let outcomes: Vec<String> = outcomes_str.split(',').map(|s| s.trim().to_string()).collect();
             let odds: Vec<Decimal> = odds_str.split(',')
                 .map(|s| Decimal::from_str(s.trim()).expect("Failed to parse odds as Decimal"))
@@ -53,6 +57,8 @@ mod prediction_market {
             
             let component = Self {
                 title,
+                min_bet,
+                max_bet,
                 outcome_tokens,
                 outcomes,
                 odds,  
@@ -103,6 +109,16 @@ mod prediction_market {
             if self.market_resolved {
                 return Err("Market has already been resolved.".to_string());
             }
+
+            // Assert bet is within the allowed range.
+            assert!(payment.amount() >= self.min_bet, 
+            "Bet amount {} is below the minimum allowed of {}.", 
+            payment.amount(), self.min_bet);
+
+            assert!(payment.amount() <= self.max_bet, 
+            "Bet amount {} exceeds the maximum allowed of {}.", 
+            payment.amount(), self.max_bet);
+
         
             // Obtain the amount being bet from the payment Bucket.
             let bet_amount = payment.amount();
