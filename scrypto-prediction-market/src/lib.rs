@@ -15,6 +15,7 @@ mod prediction_market {
             get_outcome_balance => PUBLIC;
             place_bet => PUBLIC;
             get_xrd_vault_balance => PUBLIC;
+            get_market_details => PUBLIC;
         }
     }
     
@@ -83,6 +84,11 @@ mod prediction_market {
         pub fn get_total_staked(&self) -> Decimal {
             self.total_staked.clone()
         }
+
+        pub fn get_market_details(&self) -> (String, Vec<String>, Vec<Decimal>, Decimal) {
+          (self.title.clone(), self.outcomes.clone(), self.odds.clone(), self.total_staked.clone())
+      }
+      
 
         pub fn get_outcome_balance(&self, outcome: String) -> Decimal {
             assert!(self.outcomes.contains(&outcome), "Outcome does not exist.");
