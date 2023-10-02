@@ -142,12 +142,14 @@ mod prediction_market {
           }
 
           pub fn resolve_market(&mut self, winning_outcome: u32) -> Result<Vec<(String, Decimal)>, String> {
-            // Check if the winning_outcome is within the valid range of outcomes.
-            assert!((winning_outcome as usize) < self.outcome_tokens.len(), "Winning outcome is out of bounds.");
             // Ensure the market hasn't been resolved before.
             self.ensure_market_not_resolved();
-        
+
             println!("Resolving market for winning outcome: {}", winning_outcome);
+            // Check if the winning_outcome is within the valid range of outcomes.
+            assert!((winning_outcome as usize) < self.outcome_tokens.len(), "Winning outcome is out of bounds.");
+          
+        
         
             // Initialize an empty vector to store the rewards for each user.
             let mut rewards = Vec::new();
@@ -202,13 +204,9 @@ mod prediction_market {
                 }
             }
         
-            // Reset the total_staked amount to 0 as the market is now resolved.
-            self.total_staked = Decimal::from(0);
-            println!("Reset total staked to 0.");
-        
-            // Mark the market as resolved to prevent further interactions.
-            self.market_resolved = true;
-        
+            // Reset the total_staked amount to 0 and mark the market as resolved to prevent further interactions.
+            self.reset_and_resolve_market();
+
             // Return the rewards vector as the result of the function.
             Ok(rewards)
         }
@@ -239,11 +237,8 @@ mod prediction_market {
               }
           }
       
-          // Reset the total_staked amount to 0 as the market is now resolved.
-          self.total_staked = Decimal::from(0);
-      
-          // Mark the market as resolved to prevent further interactions.
-          self.market_resolved = true;
+          // Reset the total_staked amount to 0 and mark the market as resolved to prevent further interactions.
+          self.reset_and_resolve_market();
       
           // Return Ok to indicate the market was successfully resolved as void.
           Ok(())
@@ -368,7 +363,12 @@ mod prediction_market {
         self.outcomes.iter().position(|o| o == outcome)
             .expect(&format!("Outcome '{}' does not exist. The available outcomes are: {:?}", outcome, self.outcomes))
       } 
+  
+    fn reset_and_resolve_market(&mut self) {
+      self.total_staked = Decimal::from(0);
+      self.market_resolved = true;
+  }
 
-
+  
     }        
 }
