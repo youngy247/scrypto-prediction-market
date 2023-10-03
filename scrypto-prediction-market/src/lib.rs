@@ -138,7 +138,7 @@ mod prediction_market {
         Decimal::from(self.xrd_vault.amount())
     }
 
-    //2. Market Management:
+    //2. Market Management - Admin only:
 
         // Locks the market to prevent further bets.
           pub fn lock_market(&mut self) {
@@ -268,7 +268,7 @@ mod prediction_market {
           Ok(())
       }
 
-      // 3. Betting and Claiming Rewards:
+      // 3. Betting and Claiming Rewards - Users only:
       pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) {
         // Ensure the market hasn't been resolved before.
         self.ensure_market_not_resolved();
@@ -282,8 +282,20 @@ mod prediction_market {
         // Ensure user vault exists.
         self.ensure_user_vault_exists(user_hash.clone());
     
-        // Process the bet.
-        self.process_bet(user_hash, outcome_position, payment.amount(), payment);
+        // Extract payment amount before moving `payment`
+        let payment_amount = payment.amount();
+
+        // Get a mutable reference to the vault associated with the outcome.
+        let outcome_token = &mut self.outcome_tokens[outcome_position];
+        // Deposit the payment into the outcome's vault.
+        outcome_token.put(payment);
+        // Update the total amount staked in the market.
+        self.total_staked += payment_amount;
+        // Record the bet.
+        let outcome_clone = self.outcomes[outcome_position].clone();
+        let outcome_bets = self.bets.entry(outcome_clone).or_insert_with(Vec::new);
+        outcome_bets.push((user_hash, payment_amount));
+
     }
 
     pub fn claim_reward(&mut self, user_hash: String) -> Option<Bucket> {
@@ -301,7 +313,6 @@ mod prediction_market {
           None
       }
   }
-  
   
 
         // 4. Getters:
@@ -368,31 +379,16 @@ mod prediction_market {
           );
         }
 
-        // Process the bet.
-        fn process_bet(&mut self, user_hash: String, outcome_position: usize, bet_amount: Decimal, payment: Bucket) {
-          // Get a mutable reference to the vault associated with the outcome.
-          let outcome_token = &mut self.outcome_tokens[outcome_position];
-          // Deposit the payment into the outcome's vault.
-          outcome_token.put(payment);
-          // Update the total amount staked in the market.
-          self.total_staked += bet_amount;
-          // Record the bet.
-          let outcome = &self.outcomes[outcome_position];
-          let outcome_bets = self.bets.entry(outcome.clone()).or_insert_with(Vec::new);
-          outcome_bets.push((user_hash, bet_amount));
-        }
-
         // Get outcome position using assertion
       fn get_outcome_position(&self, outcome: &String) -> usize {
         self.outcomes.iter().position(|o| o == outcome)
             .expect(&format!("Outcome '{}' does not exist. The available outcomes are: {:?}", outcome, self.outcomes))
       } 
   
-    fn reset_and_resolve_market(&mut self) {
-      self.total_staked = Decimal::from(0);
-      self.market_resolved = true;
-  }
+      fn reset_and_resolve_market(&mut self) {
+        self.total_staked = Decimal::from(0);
+        self.market_resolved = true;
+      }
 
-  
     }        
 }
