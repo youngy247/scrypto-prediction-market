@@ -535,6 +535,51 @@ mod prediction_market {
         }
 
       // 3. Betting and Claiming Rewards - Users only:
+
+/// Allows a user to place a bet on a specific outcome of the market.
+///
+/// This method enables users to stake a certain amount of tokens (contained within the `payment` bucket)
+/// on an outcome they predict will win. Once the bet is placed, the staked amount is added to the outcome's
+/// vault and the bet is recorded. If the outcome is correct when the market is resolved, the user can
+/// claim their rewards.
+///
+/// # Preconditions:
+/// 
+/// * The market should not have been resolved before.
+/// * The payment amount should be within valid bounds.
+/// * The outcome on which the bet is placed should be valid.
+///
+/// # Side Effects:
+///
+/// * The payment amount is added to the vault associated with the chosen outcome.
+/// * The total staked amount in the market is updated.
+/// * The bet is either updated (if it exists) or added to the list of bets.
+/// * An event, `BetPlacedEvent`, is emitted to signal the bet placement.
+///
+/// # Parameters:
+/// 
+/// * `user_hash`: A unique identifier (hash) for the user placing the bet.
+/// * `outcome`: The outcome on which the user is betting.
+/// * `payment`: A `Bucket` object containing the staked tokens for the bet.
+///
+/// # Errors:
+///
+/// * If the market was already resolved.
+/// * If the total bet exceeds the allowed limit.
+///
+/// # Returns:
+///
+/// No explicit return. The function updates internal structures and emits an event.
+///
+/// ---
+///
+/// **Access control:** Public method, can be called by anyone.
+/// 
+///  **Transaction manifest:**
+/// `transactions/place_bet.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/place_bet.rtm")]
+///
         pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) {
             // Ensure the market hasn't been resolved before.
             self.ensure_market_not_resolved();
