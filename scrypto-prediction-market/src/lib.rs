@@ -100,14 +100,25 @@ struct ClaimRewardEvent {
 #[blueprint]
 #[events(MarketResolvedEvent, MarketLockedEvent, BetPlacedEvent, MarketResolvedAsVoidEvent, ClaimRewardEvent)]
 mod prediction_market {
+    
+    // Method authentication setup. 
+    // Specifies roles and access permissions for different methods.
     enable_method_auth! {
+        
+        // Roles and their updatable conditions.
         roles {
+            // The `admin` role has no updatable conditions, meaning once set, it remains fixed.
             admin => updatable_by: [];
         },
+        
+        // Specify which methods can be accessed by which roles.
         methods {
+            // Only the `admin` can resolve, lock, and resolve the market as void.
             resolve_market => restrict_to: [admin]; 
             resolve_market_as_void => restrict_to: [admin];
             lock_market => restrict_to: [admin];
+            
+            // These methods can be accessed by any user.
             withdraw_from_vault => PUBLIC;
             admin_claim => PUBLIC;
             claim_reward => PUBLIC;
@@ -121,21 +132,47 @@ mod prediction_market {
         }
     }
     
+    // Primary structure for the prediction market.
     pub struct PredictionMarket {
+        // Title or name of the market.
         title: String,
+        
+        // Minimum and maximum bet amounts allowed.
         min_bet: Decimal,
         max_bet: Decimal,
+        
+        // Vaults associated with each potential market outcome.
         outcome_tokens: Vec<Vault>,
+        
+        // Possible outcomes in the market.
         outcomes: Vec<String>,
+        
+        // Odds associated with each outcome.
         odds: Vec<Decimal>,   
+        
+        // Total amount staked in the market.
         total_staked: Decimal,
+        
+        // Records of all bets placed, categorized by outcome.
+        // Each entry consists of the user's hash and the amount they bet.
         bets: HashMap<String, Vec<(String, Decimal)>>,
+        
+        // Vault for the XRD token (potentially the primary currency of the system).
         xrd_vault: Vault,
+        
+        // Vault for the admin.
         admin_vault: Vault,
+        
+        // Vaults for individual users, mapped by user hash.
         user_vaults: HashMap<String, Vault>,
+        
+        // Flag to indicate if the market has been resolved.
         market_resolved: bool,
+        
+        // Flag to indicate if the market is locked (no more betting allowed).
         market_locked: bool,
     }
+
 
     impl PredictionMarket {
 
