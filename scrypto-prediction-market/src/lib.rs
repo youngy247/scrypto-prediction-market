@@ -217,7 +217,7 @@ mod prediction_market {
 /// **Transaction manifest:**
 /// `transactions/instantiate_prediction_market.rtm`
 /// ```text
-/// #[doc = include_str!("../rtm/prediction_market/instantiate_prediction_market.rtm")]
+/// #[doc = include_str!("../transactions/instantiate_prediction_market.rtm")]
 /// ```
 
         pub fn instantiate_prediction_market(title: String, outcomes_str: String, odds_str: String, min_bet: Decimal, 
