@@ -2,6 +2,7 @@ use scrypto::prelude::*;
 use scrypto_test::prelude::*;
 use scrypto_unit::TestRunnerBuilder;
 
+
 #[test]
 fn test_instantiate_prediction_market() -> Result<(), RuntimeError> {
     // Set up environment.

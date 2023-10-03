@@ -1,0 +1,32 @@
+# 1. Lock fees in the account.
+CALL_METHOD
+    Address("${account}")
+    "lock_fee"
+    Decimal("100"); 
+
+# 2. Withdraw the required amount for the bet.
+CALL_METHOD
+    Address("${account}")
+    "withdraw"
+    Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3")
+    Decimal("50");
+
+# 3. Take the withdrawn amount from the worktop and put it into a named bucket.
+TAKE_FROM_WORKTOP
+    Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3")
+    Decimal("50")
+    Bucket("bet_bucket");
+
+# 4. Place the bet using the funds in the bucket.
+CALL_METHOD
+    Address("${market}")
+    "place_bet"
+    "${account}"
+    "Yes"
+    Bucket("bet_bucket");
+
+# Deposit any remaining funds back into your account.
+CALL_METHOD
+    Address("${account}")
+    "deposit_batch"
+    Expression("ENTIRE_WORKTOP");
