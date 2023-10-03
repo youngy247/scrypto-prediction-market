@@ -185,7 +185,7 @@ mod prediction_market {
 
       //1. Initialization and Setup:
 
-      /// Initializes and sets up a new Prediction Market, returning the created market's global component and any admin badges.
+/// Initializes and sets up a new Prediction Market, returning the created market's global component and any admin badges.
 ///
 /// Will panic if the provided input parameters are not valid.
 ///
@@ -312,10 +312,38 @@ mod prediction_market {
             )
         }
 
+/// Deposits a given `Bucket` into the `xrd_vault`.
+///
+/// Updates the internal `xrd_vault` of the struct by adding the amount specified 
+/// in the given `deposit` Bucket.
+///
+/// Will panic if the `deposit` value is negative or if adding the `deposit` to 
+/// the `xrd_vault` results in an overflow.
+///
+/// ---
+///
+/// **Access control:** Public method, can be called by anyone.
+///
+/// **Transaction manifest:** `transactions/deposit_to_xrd_vault.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/deposit_to_xrd_vault.rtm")]
+/// ```
         pub fn deposit_to_xrd_vault(&mut self, deposit: Bucket) {
             self.xrd_vault.put(deposit);
         }
 
+/// Retrieves the current balance of the `xrd_vault`.
+///
+/// Returns the current amount held in the `xrd_vault` as a `Decimal`.
+///
+/// ---
+///
+/// **Access control:** Read only, can be called by anyone.
+///
+/// **Transaction manifest:** `transactions/get_xrd_vault_balance.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/get_xrd_vault_balance.rtm")]
+/// ```      
         pub fn get_xrd_vault_balance(&self) -> Decimal {
             Decimal::from(self.xrd_vault.amount())
         }
