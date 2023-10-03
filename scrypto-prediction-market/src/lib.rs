@@ -124,10 +124,10 @@ mod prediction_market {
             resolve_market => restrict_to: [admin]; 
             resolve_market_as_void => restrict_to: [admin];
             lock_market => restrict_to: [admin];
+            withdraw_from_vault => restrict_to: [admin];
+            admin_claim => restrict_to: [admin];
             
             // These methods can be accessed by any user.
-            withdraw_from_vault => PUBLIC;
-            admin_claim => PUBLIC;
             claim_reward => PUBLIC;
             deposit_to_xrd_vault => PUBLIC;
             list_outcomes => PUBLIC;
