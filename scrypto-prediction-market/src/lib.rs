@@ -691,13 +691,36 @@ mod prediction_market {
 
         // 4. Getters:
         
+/// Lists all the outcomes for the market.
+///
+/// ---
+///
+/// **Access control:** Public method, can be called by anyone.
+///
+/// **Transaction manifest:**
+/// `transactions/list_outcomes.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/list_outcomes.rtm")]
+///
         pub fn list_outcomes(&self) -> Vec<String> {
             self.outcomes.clone()
         }
 
+/// Retrieves the total amount staked in the market.
+///
+/// ---
+///
+/// **Access control:** Public method, can be called by anyone.
+///
+/// **Transaction manifest:**
+/// `transactions/get_total_staked.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/get_total_staked.rtm")]
+///
         pub fn get_total_staked(&self) -> Decimal {
             self.total_staked.clone()
         }
+
 
         pub fn get_market_details(&self) -> (String, Vec<String>, Vec<Decimal>, Decimal) {
             (self.title.clone(), self.outcomes.clone(), self.odds.clone(), self.total_staked.clone())
