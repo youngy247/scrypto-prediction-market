@@ -1,6 +1,38 @@
 use scrypto::prelude::*;
 
+#[derive(ScryptoSbor, ScryptoEvent)]
+struct MarketResolvedEvent {
+    market_id: String,  
+    winning_outcome: u32,
+}
+
+#[derive(ScryptoSbor, ScryptoEvent)]
+struct MarketResolvedAsVoidEvent {
+    market_id: String,
+}
+
+#[derive(ScryptoSbor, ScryptoEvent)]
+struct MarketLockedEvent {
+    market_id: String,
+}
+
+#[derive(ScryptoSbor, ScryptoEvent)]
+struct BetPlacedEvent {
+    market_id: String,
+    user_hash: String,
+    outcome: String,
+    amount: Decimal,
+}
+
+#[derive(ScryptoSbor, ScryptoEvent)]
+struct ClaimRewardEvent {
+    market_id: String,
+    user_hash: String,
+    reward: Decimal,
+}
+
 #[blueprint]
+#[events(MarketResolvedEvent, MarketLockedEvent, BetPlacedEvent, MarketResolvedAsVoidEvent, ClaimRewardEvent)]
 mod prediction_market {
     enable_method_auth! {
         roles {
@@ -143,6 +175,10 @@ mod prediction_market {
         // Locks the market to prevent further bets.
           pub fn lock_market(&mut self) {
             self.market_locked = true;
+
+            Runtime::emit_event(MarketLockedEvent {
+                market_id: self.title.clone(),
+            });
           }
 
           pub fn withdraw_from_vault(&mut self, amount: Decimal) {
@@ -231,6 +267,13 @@ mod prediction_market {
             // Reset the total_staked amount to 0 and mark the market as resolved to prevent further interactions.
             self.reset_and_resolve_market();
 
+            // Emit the MarketResolvedEvent right after the market is resolved.
+            Runtime::emit_event(MarketResolvedEvent {
+                market_id: self.title.clone(),
+                winning_outcome,
+            });
+
+
             // Return the rewards vector as the result of the function.
             Ok(rewards)
         }
@@ -263,6 +306,13 @@ mod prediction_market {
       
           // Reset the total_staked amount to 0 and mark the market as resolved to prevent further interactions.
           self.reset_and_resolve_market();
+
+
+            // Emit the MarketResolvedAsVoidEvent right after the market is resolved as void.
+          Runtime::emit_event(MarketResolvedAsVoidEvent {
+            market_id: self.title.clone(),
+        });
+
       
           // Return Ok to indicate the market was successfully resolved as void.
           Ok(())
@@ -294,7 +344,16 @@ mod prediction_market {
         // Record the bet.
         let outcome_clone = self.outcomes[outcome_position].clone();
         let outcome_bets = self.bets.entry(outcome_clone).or_insert_with(Vec::new);
-        outcome_bets.push((user_hash, payment_amount));
+        outcome_bets.push((user_hash.clone(), payment_amount));
+
+        // Emit the BetPlacedEvent.
+        Runtime::emit_event(BetPlacedEvent {
+            market_id: self.title.clone(),
+            user_hash,
+            outcome,
+            amount: payment_amount,
+        });
+
 
     }
 
@@ -306,8 +365,17 @@ mod prediction_market {
           
           // Assert that the bucket is not empty.
           assert!(!bucket.is_empty(), "Bucket is empty");
+
+          // Emit an event to indicate successful reward claim.
+        Runtime::emit_event(ClaimRewardEvent {
+            market_id: self.title.clone(),
+            user_hash: user_hash.clone(),
+            reward: bucket.amount(),
+        });
           
           Some(bucket)
+          
+
       } else {
           // If the user's vault does not exist, return None.
           None
