@@ -184,6 +184,42 @@ mod prediction_market {
     impl PredictionMarket {
 
       //1. Initialization and Setup:
+
+      /// Initializes and sets up a new Prediction Market, returning the created market's global component and any admin badges.
+///
+/// Will panic if the provided input parameters are not valid.
+///
+/// `title`: Represents the name or title of the prediction market.
+///
+/// `outcomes_str`: A comma-separated string of possible outcomes in the market. Must not contain duplicate outcomes.
+///
+/// `odds_str`: A comma-separated string of odds associated with each outcome. The number of odds provided must match the number of outcomes.
+///
+/// `min_bet`: Minimum amount that can be placed as a bet.
+///
+/// `max_bet`: Maximum amount that can be placed as a bet. It must be greater than `min_bet`.
+///
+/// The function ensures that:
+/// - Outcomes provided are unique.
+/// - Odds are greater than 1.
+/// - The number of odds matches the number of outcomes.
+/// - `min_bet` is at least 5 and `max_bet` is greater than `min_bet`.
+///
+/// After validation, the function creates a vault for each outcome and initializes the prediction market with the provided data. 
+/// An `admin_badge` is also created to represent the admin role for this prediction market.
+///
+/// This function emits a `MarketCreatedEvent` once the market is successfully created.
+///
+/// ---
+///
+/// **Access control:** Currently, anyone can instantiate a prediction market, but certain operations are restricted to the admin.
+///
+/// **Transaction manifest:**
+/// `transactions/instantiate_prediction_market.rtm`
+/// ```text
+/// #[doc = include_str!("../rtm/prediction_market/instantiate_prediction_market.rtm")]
+/// ```
+
         pub fn instantiate_prediction_market(title: String, outcomes_str: String, odds_str: String, min_bet: Decimal, 
         max_bet: Decimal
         ) -> (Global<PredictionMarket>, FungibleBucket) {
