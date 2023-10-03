@@ -10,6 +10,8 @@ mod prediction_market {
             resolve_market => restrict_to: [admin]; 
             resolve_market_as_void => restrict_to: [admin];
             lock_market => restrict_to: [admin];
+            withdraw_from_vault => PUBLIC;
+            admin_claim => PUBLIC;
             claim_reward => PUBLIC;
             deposit_to_xrd_vault => PUBLIC;
             list_outcomes => PUBLIC;
@@ -31,6 +33,7 @@ mod prediction_market {
         total_staked: Decimal,
         bets: HashMap<String, Vec<(String, Decimal)>>,
         xrd_vault: Vault,
+        admin_vault: Vault,
         user_vaults: HashMap<String, Vault>,
         market_resolved: bool,
         market_locked: bool,
@@ -107,6 +110,7 @@ mod prediction_market {
                 total_staked: Decimal::from(0),
                 bets: HashMap::new(),
                 xrd_vault: Vault::new(XRD),
+                admin_vault: Vault::new(XRD),
                 user_vaults: HashMap::new(),
                 market_resolved: false,
                 market_locked: false,
@@ -140,6 +144,26 @@ mod prediction_market {
           pub fn lock_market(&mut self) {
             self.market_locked = true;
           }
+
+          pub fn withdraw_from_vault(&mut self, amount: Decimal) {
+            // Ensure the xrd_vault has enough funds to fulfill the withdrawal request.
+            assert!(self.xrd_vault.amount() >= amount, "Insufficient funds in xrd_vault.");
+        
+            // Take the specified amount from the xrd_vault.
+            let withdrawal_bucket = self.xrd_vault.take(amount);
+            self.admin_vault.put(withdrawal_bucket);
+        }
+
+        pub fn admin_claim(&mut self) -> Option<Bucket> {
+          // Take all tokens from the admin_vault.
+          let bucket = self.admin_vault.take_all();
+      
+          // Assert that the bucket is not empty.
+          assert!(!bucket.is_empty(), "Bucket is empty");
+      
+          Some(bucket)
+      }
+      
 
           pub fn resolve_market(&mut self, winning_outcome: u32) -> Result<Vec<(String, Decimal)>, String> {
             // Ensure the market hasn't been resolved before.
