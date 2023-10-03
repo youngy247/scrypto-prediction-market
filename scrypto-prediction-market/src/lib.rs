@@ -392,83 +392,74 @@ mod prediction_market {
             Some(bucket)
         }
 
-
+/// Resolves the market by determining the winning outcome and distributing rewards accordingly.
+///
+/// This method identifies the winning outcome and transfers tokens from the losing vaults to the `xrd_vault`.
+/// It then processes the bets for the winning outcome and calculates the reward for each user based on 
+/// their stake and the odds. Rewards are transferred to the user's vault.
+///
+/// After the market is resolved, it resets the total staked amount and prevents any further interactions 
+/// with this market. The function emits a `MarketResolvedEvent` signaling the market's resolution status.
+///
+/// # Parameters:
+/// 
+/// * `winning_outcome`: The index of the winning outcome. This must be within the range of valid outcomes.
+///
+/// # Returns:
+///
+/// A `Result` containing a vector of tuples with user IDs and their corresponding rewards if successful, 
+/// or an error message string if the market resolution fails for some reason.
+///
+/// ---
+///
+/// **Access control:** Admin only. Only the market's administrator has the authority to resolve the market.
+///
+/// **Transaction manifest:**
+/// `transactions/resolve_market.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/resolve_market.rtm")]
+/// ```
         pub fn resolve_market(&mut self, winning_outcome: u32) -> Result<Vec<(String, Decimal)>, String> {
-            // Ensure the market hasn't been resolved before.
+            // Check that the market is unresolved and the winning outcome is valid.
             self.ensure_market_not_resolved();
-
-            println!("Resolving market for winning outcome: {}", winning_outcome);
-            // Check if the winning_outcome is within the valid range of outcomes.
             assert!((winning_outcome as usize) < self.outcome_tokens.len(), "Winning outcome is out of bounds.");
-        
-        
-        
-            // Initialize an empty vector to store the rewards for each user.
-            let mut rewards = Vec::new();
-        
-            // Iterate through each outcome's vault to process losing vaults.
-            for (index, outcome_vault) in self.outcome_tokens.iter_mut().enumerate() {
-                if index == winning_outcome as usize {
-                    continue; // Skip the winning vault.
-                }
-        
-                // Take all tokens from the losing vault.
-                let tokens = outcome_vault.take_all();
-                println!("Tokens taken from losing vault {}: {:?}", index, tokens);
-        
-                // Transfer tokens from losing vaults to the xrd_vault.
-                self.xrd_vault.put(tokens);
-            }
-        
-            println!("Total amount in xrd_vault after transferring from losing vaults: {}", self.xrd_vault.amount());
-        
-            // Get the total amount staked for the winning outcome.
-            let winning_outcome_str = &self.outcomes[winning_outcome as usize];
-            let total_winning_staked = self.bets.get(winning_outcome_str)
-            .map_or(Decimal::from(0), |bets| bets.iter().fold(Decimal::from(0), |acc, (_, amt)| acc + *amt));
 
-        
-            println!("Total amount staked for the winning outcome {}: {}", winning_outcome, total_winning_staked);
-        
-            // If there are bets for the winning outcome, process them.
-            if let Some(winning_bets) = self.bets.get(winning_outcome_str) {
+            // Prepare to calculate rewards.
+            let mut rewards = Vec::new();
+
+            // Transfer tokens from losing outcome vaults to the main vault (xrd_vault).
+            for (index, outcome_vault) in self.outcome_tokens.iter_mut().enumerate() {
+                if index != winning_outcome as usize {
+                    let tokens = outcome_vault.take_all();
+                    self.xrd_vault.put(tokens);
+                }
+            }
+
+            // Calculate rewards for users who bet on the winning outcome.
+            if let Some(winning_bets) = self.bets.get(&self.outcomes[winning_outcome as usize]) {
                 for (user, bet_amt) in winning_bets {
-                    // Calculate the user's proportion of the total staked amount for the winning outcome.
-                    let user_proportion = *bet_amt / total_winning_staked;
-        
-                    println!("User {} proportion of total winning stake: {}", user, user_proportion);
-        
-                    // Calculate the reward based on the odds and the user's proportion of the winning stake.
                     let user_reward = *bet_amt * self.odds[winning_outcome as usize];
-        
-                    println!("Calculated reward for user {}: {}", user, user_reward);
-        
-                    // Store the user and their reward in the rewards vector.
                     rewards.push((user.clone(), user_reward));
-        
-                    // Extract the reward from the xrd_vault.
-                    let reward_bucket = self.xrd_vault.take(user_reward);
-        
-                    // Transfer the reward to the user's vault.
+
+                    // Transfer the reward from the main vault to the user's individual vault.
                     if let Some(user_vault) = self.user_vaults.get_mut(user) {
-                        user_vault.put(reward_bucket);
+                        user_vault.put(self.xrd_vault.take(user_reward));
                     }
                 }
             }
-        
-            // Reset the total_staked amount to 0 and mark the market as resolved to prevent further interactions.
+
+            // Reset the market and finalize it as resolved.
             self.reset_and_resolve_market();
 
-            // Emit the MarketResolvedEvent right after the market is resolved.
+            // Emit that the market has been resolved.
             Runtime::emit_event(MarketResolvedEvent {
                 market_id: self.title.clone(),
                 winning_outcome,
             });
 
-
-            // Return the rewards vector as the result of the function.
             Ok(rewards)
         }
+
 
         pub fn resolve_market_as_void(&mut self) -> Result<(), String> {
             // Ensure the market hasn't been resolved before.
