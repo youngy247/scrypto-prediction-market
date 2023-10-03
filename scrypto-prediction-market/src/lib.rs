@@ -445,7 +445,16 @@ mod prediction_market {
             // Record the bet.
             let outcome_clone = self.outcomes[outcome_position].clone();
             let outcome_bets = self.bets.entry(outcome_clone).or_insert_with(Vec::new);
-            outcome_bets.push((user_hash.clone(), payment_amount));
+            
+            if let Some(existing_bet) = outcome_bets.iter_mut().find(|(existing_user, _)| existing_user == &user_hash) {
+                let excess_amount = existing_bet.1 + payment_amount - self.max_bet;
+                assert!(existing_bet.1 + payment_amount <= self.max_bet, 
+                        "Total bet exceeds the allowed limit by {}. You can bet up to {} more.", excess_amount, self.max_bet - existing_bet.1);
+                        existing_bet.1 += payment_amount;  // Update the bet amount
+                } else {
+                    outcome_bets.push((user_hash.clone(), payment_amount)); // Insert a new bet
+                }
+
 
             // Emit the BetPlacedEvent.
             Runtime::emit_event(BetPlacedEvent {
