@@ -372,7 +372,17 @@ mod prediction_market {
             });
         }
 
-
+/// Withdraws a specified amount from the treasuary `xrd_vault`.
+/// 
+/// ---
+///
+/// **Access control:** Admin only.
+/// 
+/// **Transaction manifest:**
+/// `transactions/withdraw_from_vault.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/withdraw_from_vault.rtm")]
+/// ```
         pub fn withdraw_from_vault(&mut self, amount: Decimal) {
             // Ensure the xrd_vault has enough funds to fulfill the withdrawal request.
             assert!(self.xrd_vault.amount() >= amount, "Insufficient funds in xrd_vault.");
@@ -382,6 +392,17 @@ mod prediction_market {
             self.admin_vault.put(withdrawal_bucket);
         }
 
+/// Claims all tokens from the `admin_vault`.
+/// 
+/// ---
+///
+/// **Access control:** Admin only.
+/// 
+/// **Transaction manifest:**
+/// `transactions/admin_claim.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/admin_claim.rtm")]
+/// ```
         pub fn admin_claim(&mut self) -> Option<Bucket> {
             // Take all tokens from the admin_vault.
             let bucket = self.admin_vault.take_all();

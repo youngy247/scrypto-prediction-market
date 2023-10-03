@@ -7,4 +7,3 @@ CALL_METHOD
     Address("${market}")   
     "get_outcome_balance"
     "Yes";
-    
