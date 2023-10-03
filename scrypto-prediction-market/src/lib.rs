@@ -1,3 +1,55 @@
+/*
+---------------------------------------------------
+DEV NOTE: PREDICTION MARKET IN SCRYPTO
+---------------------------------------------------
+
+OVERVIEW:
+This blueprint represents a prediction market on Scrypto where users can place bets on potential outcomes, and market admins can manage the market's state.
+
+FUNCTIONALITY HIGHLIGHTS:
+1.  Events are emitted for several major actions 
+    (e.g., when a market is resolved, when a bet is placed). 
+    These events can be monitored by a front-end application 
+    to provide real-time feedback to users.
+2.  Methods are organized into 5 main sections for clarity:
+        - Initialization and Setup
+        - Market Management (Admin only)
+        - Betting and Claiming Rewards (Users only)
+        - Getters (Methods to fetch specific data)
+        - Helper Functions (Internal utility functions)
+
+SPECIFIC FUNCTION OVERVIEWS:
+1.  Initialization and Setup:
+        - `instantiate_prediction_market`: Set up the market with given parameters.
+        - `deposit_to_xrd_vault`: Allow deposits to the market's XRD vault.
+        - `get_xrd_vault_balance`: Fetch the current balance of the XRD vault.
+
+2.  Market Management (Admin-only):
+        - `lock_market`: Prevent further bets on this market.
+        - `withdraw_from_vault`: Admin can withdraw a specified amount from the xrd_vault.
+        - `admin_claim`: Admin can claim tokens from the admin_vault.
+        - `resolve_market`: Determine the winning outcome and distribute rewards.
+        - `resolve_market_as_void`: Void the market and refund all bets.
+
+3.  Betting and Claiming Rewards (Users only):
+        - `place_bet`: A user places a bet on an outcome. Validation ensures the bet is valid, and the bet amount is staked on the chosen outcome.
+        - `claim_reward`: A user claims their reward. If the user has a reward in their vault, it's returned to them.
+
+4.  Getters:
+        - `list_outcomes`: List all possible outcomes in the market.
+        - `get_total_staked`: Get the total amount staked in the market.
+        - `get_market_details`: Fetch the market's details, including title, possible outcomes, odds, and total staked amount.
+        - `get_outcome_balance`: Get the total amount staked for a specific outcome.
+
+5.  Helper Functions (Internal utility functions):
+        - `ensure_market_not_resolved`: Ensure the market hasn't been resolved before proceeding.
+        - `ensure_user_vault_exists`: Ensure a user vault exists or create one if it doesn't.
+        - `validate_bet`: Validate the provided bet ensuring the amount is within limits and the market isn't locked.
+        - `get_outcome_position`: Get the index position of a specified outcome in the market.
+        - `reset_and_resolve_market`: Reset the total staked amount and mark the market as resolved.
+
+ */
+
 use scrypto::prelude::*;
 
 #[derive(ScryptoSbor, ScryptoEvent)]
