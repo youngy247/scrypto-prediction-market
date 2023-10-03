@@ -721,18 +721,43 @@ mod prediction_market {
             self.total_staked.clone()
         }
 
-
+/// Retrieves the details of the market.
+///
+/// Details include the market title, outcomes, odds for each outcome, and the total amount staked in the market.
+///
+/// ---
+///
+/// **Access control:** Public method, can be called by anyone.
+/// 
+/// **Transaction manifest:**
+/// `transactions/get_market_details.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/get_market_details.rtm")]
+///
         pub fn get_market_details(&self) -> (String, Vec<String>, Vec<Decimal>, Decimal) {
             (self.title.clone(), self.outcomes.clone(), self.odds.clone(), self.total_staked.clone())
         }
-    
 
+/// Fetches the balance associated with a particular market outcome.
+///
+/// ---
+///
+/// **Access control:** Public method, can be called by anyone.
+/// 
+/// **Errors:** If the provided outcome doesn't exist in the market.
+/// 
+/// **Transaction manifest:**
+/// `transactions/get_outcome_balance.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/get_outcome_balance.rtm")]
+/// 
         pub fn get_outcome_balance(&self, outcome: String) -> Decimal {
             assert!(self.outcomes.contains(&outcome), "Outcome does not exist.");
-            
+
             let index = self.outcomes.iter().position(|o| o == &outcome).expect("Outcome not found.");
             Decimal::from(self.outcome_tokens[index].amount())
         }
+
 
         // 5. Helpers:
         
