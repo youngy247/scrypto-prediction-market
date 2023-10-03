@@ -58,6 +58,13 @@ use scrypto::prelude::*;
 /// - For unique identification, especially in cases with multiple instances of the same market,
 ///   consider transitioning to a UUID.
 
+/// Event emitted when a new prediction market is created.
+#[derive(ScryptoSbor, ScryptoEvent)]
+struct MarketCreatedEvent {
+    market_id: String,
+}
+
+
 /// Represents an event that gets emitted when a market is resolved.
 /// This means that the outcome of the market is determined.
 #[derive(ScryptoSbor, ScryptoEvent)]
@@ -98,7 +105,7 @@ struct ClaimRewardEvent {
 
 
 #[blueprint]
-#[events(MarketResolvedEvent, MarketLockedEvent, BetPlacedEvent, MarketResolvedAsVoidEvent, ClaimRewardEvent)]
+#[events(MarketCreatedEvent, MarketResolvedEvent, MarketLockedEvent, BetPlacedEvent, MarketResolvedAsVoidEvent, ClaimRewardEvent)]
 mod prediction_market {
     
     // Method authentication setup. 
@@ -236,7 +243,7 @@ mod prediction_market {
 
             
             let component = Self {
-                title,
+                title: title.clone(),
                 min_bet,
                 max_bet,
                 outcome_tokens,
@@ -256,6 +263,11 @@ mod prediction_market {
                 admin => rule!(require(admin_badge.resource_address()));
             ))
             .globalize();
+
+            Runtime::emit_event(MarketCreatedEvent {
+                market_id: title,  
+            });
+            
 
             // Return the component address and the owner_badge
             (
@@ -445,7 +457,7 @@ mod prediction_market {
             // Record the bet.
             let outcome_clone = self.outcomes[outcome_position].clone();
             let outcome_bets = self.bets.entry(outcome_clone).or_insert_with(Vec::new);
-            
+
             if let Some(existing_bet) = outcome_bets.iter_mut().find(|(existing_user, _)| existing_user == &user_hash) {
                 let excess_amount = existing_bet.1 + payment_amount - self.max_bet;
                 assert!(existing_bet.1 + payment_amount <= self.max_bet, 
