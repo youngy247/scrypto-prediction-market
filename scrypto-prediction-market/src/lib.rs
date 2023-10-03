@@ -350,7 +350,20 @@ mod prediction_market {
 
         //2. Market Management - Admin only:
 
-        // Locks the market to prevent further bets.
+/// Locks the market to prevent further bets from being placed.
+///
+/// Once the market is locked, no new bets can be accepted. This action is irreversible for the lifecycle of the market.
+/// After the lock operation, a `MarketLockedEvent` is emitted, signaling listeners or other components of the status change.
+///
+/// ---
+///
+/// **Access control:** Admin only. Only the market's administrator has the authority to lock the market.
+///
+/// **Transaction manifest:**
+/// `transactions/lock_market.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/lock_market.rtm")]
+/// ```
         pub fn lock_market(&mut self) {
             self.market_locked = true;
 
@@ -358,6 +371,7 @@ mod prediction_market {
                 market_id: self.title.clone(),
             });
         }
+
 
         pub fn withdraw_from_vault(&mut self, amount: Decimal) {
             // Ensure the xrd_vault has enough funds to fulfill the withdrawal request.
