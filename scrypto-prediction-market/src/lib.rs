@@ -460,7 +460,41 @@ mod prediction_market {
             Ok(rewards)
         }
 
-
+/// Resolves the market as void, refunding all participants with their betted amounts.
+///
+/// This method is utilized in situations where the market cannot be settled based on a specific outcome, 
+/// due to unforeseen circumstances or other reasons that prevent a definitive resolution. As a result, 
+/// all participants are refunded their initial stake, ensuring no loss or gain from their bets.
+///
+/// # Preconditions
+///
+/// - The market should not have been resolved before.
+///
+/// # Side Effects
+///
+/// - All tokens in the outcome vaults are transferred to the xrd_vault.
+/// - All users are refunded their original staked amounts of XRD from the xrd_vault back to their respective vaults. 
+///   Users can subsequently claim these amounts.
+/// - The market is marked as resolved to prevent further bets or interactions.
+/// - An event, `MarketResolvedAsVoidEvent`, is emitted to signal the resolution.
+///
+/// # Errors
+///
+/// - If the market was already resolved.
+/// 
+///  # Returns
+///
+/// - `Ok(())` if the market is successfully resolved as void.
+///
+/// ---
+///
+/// **Access control:** Admin only. Only the market's administrator has the authority to resolve the market.
+///
+/// **Transaction manifest:**
+/// `transactions/resolve_market_as_void.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/resolve_market_as_void.rtm")]
+///
         pub fn resolve_market_as_void(&mut self) -> Result<(), String> {
             // Ensure the market hasn't been resolved before.
             self.ensure_market_not_resolved();
