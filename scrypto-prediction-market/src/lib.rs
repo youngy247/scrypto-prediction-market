@@ -75,8 +75,8 @@ mod prediction_market {
 
       //1. Initialization and Setup:
         pub fn instantiate_prediction_market(title: String, outcomes_str: String, odds_str: String, min_bet: Decimal, 
-          max_bet: Decimal
-  ) -> (Global<PredictionMarket>, FungibleBucket) {
+        max_bet: Decimal
+        ) -> (Global<PredictionMarket>, FungibleBucket) {
 
             let outcomes: Vec<String> = outcomes_str.split(',').map(|s| s.trim().to_string()).collect();
             // Validate Uniqueness of Outcomes
@@ -92,33 +92,33 @@ mod prediction_market {
                 .map(|s| Decimal::from_str(s.trim()).expect("Failed to parse odds as Decimal"))
                 .collect();
 
-              // Validate Odds
+                // Validate Odds
                 for odd in &odds {
-                  assert!(
-                      *odd > Decimal::from(1),
-                      "Odds must be greater than 1. Provided: {}",
-                      odd
-                  );
-              }
+                    assert!(
+                        *odd > Decimal::from(1),
+                        "Odds must be greater than 1. Provided: {}",
+                        odd
+                    );
+                }
         
-              assert_eq!(
-                outcomes.len(),
-                odds.len(),
-                "The number of odds provided does not match the number of outcomes."
-            );
+                assert_eq!(
+                    outcomes.len(),
+                    odds.len(),
+                    "The number of odds provided does not match the number of outcomes."
+                );
 
               // Validate Min and Max Bet
-              assert!(
-                min_bet >= Decimal::from(5),
-                "Minimum bet must be atleast 5. Provided: {}",
-                min_bet
-              );
+                assert!(
+                    min_bet >= Decimal::from(5),
+                    "Minimum bet must be atleast 5. Provided: {}",
+                    min_bet
+                );
 
-              assert!(
-                max_bet > min_bet,
-                "Maximum bet must be greater than the minimum bet. Provided: Max bet: {}, Min bet: {}",
-                max_bet, min_bet
-              );
+                assert!(
+                    max_bet > min_bet,
+                    "Maximum bet must be greater than the minimum bet. Provided: Max bet: {}, Min bet: {}",
+                    max_bet, min_bet
+                );
 
         
             let mut outcome_tokens = Vec::new();
@@ -162,26 +162,25 @@ mod prediction_market {
         }
 
         pub fn deposit_to_xrd_vault(&mut self, deposit: Bucket) {
+            self.xrd_vault.put(deposit);
+        }
 
-          self.xrd_vault.put(deposit);
-      }
+        pub fn get_xrd_vault_balance(&self) -> Decimal {
+            Decimal::from(self.xrd_vault.amount())
+        }
 
-      pub fn get_xrd_vault_balance(&self) -> Decimal {
-        Decimal::from(self.xrd_vault.amount())
-    }
-
-    //2. Market Management - Admin only:
+        //2. Market Management - Admin only:
 
         // Locks the market to prevent further bets.
-          pub fn lock_market(&mut self) {
+        pub fn lock_market(&mut self) {
             self.market_locked = true;
 
             Runtime::emit_event(MarketLockedEvent {
                 market_id: self.title.clone(),
             });
-          }
+        }
 
-          pub fn withdraw_from_vault(&mut self, amount: Decimal) {
+        pub fn withdraw_from_vault(&mut self, amount: Decimal) {
             // Ensure the xrd_vault has enough funds to fulfill the withdrawal request.
             assert!(self.xrd_vault.amount() >= amount, "Insufficient funds in xrd_vault.");
         
@@ -191,24 +190,24 @@ mod prediction_market {
         }
 
         pub fn admin_claim(&mut self) -> Option<Bucket> {
-          // Take all tokens from the admin_vault.
-          let bucket = self.admin_vault.take_all();
-      
-          // Assert that the bucket is not empty.
-          assert!(!bucket.is_empty(), "Bucket is empty");
-      
-          Some(bucket)
-      }
-      
+            // Take all tokens from the admin_vault.
+            let bucket = self.admin_vault.take_all();
 
-          pub fn resolve_market(&mut self, winning_outcome: u32) -> Result<Vec<(String, Decimal)>, String> {
+            // Assert that the bucket is not empty.
+            assert!(!bucket.is_empty(), "Bucket is empty");
+
+            Some(bucket)
+        }
+
+
+        pub fn resolve_market(&mut self, winning_outcome: u32) -> Result<Vec<(String, Decimal)>, String> {
             // Ensure the market hasn't been resolved before.
             self.ensure_market_not_resolved();
 
             println!("Resolving market for winning outcome: {}", winning_outcome);
             // Check if the winning_outcome is within the valid range of outcomes.
             assert!((winning_outcome as usize) < self.outcome_tokens.len(), "Winning outcome is out of bounds.");
-          
+        
         
         
             // Initialize an empty vector to store the rewards for each user.
@@ -234,7 +233,7 @@ mod prediction_market {
             let winning_outcome_str = &self.outcomes[winning_outcome as usize];
             let total_winning_staked = self.bets.get(winning_outcome_str)
             .map_or(Decimal::from(0), |bets| bets.iter().fold(Decimal::from(0), |acc, (_, amt)| acc + *amt));
-  
+
         
             println!("Total amount staked for the winning outcome {}: {}", winning_outcome, total_winning_staked);
         
@@ -277,111 +276,108 @@ mod prediction_market {
             // Return the rewards vector as the result of the function.
             Ok(rewards)
         }
-  
-        pub fn resolve_market_as_void(&mut self) -> Result<(), String> {
-          // Ensure the market hasn't been resolved before.
-          self.ensure_market_not_resolved();
-      
-          // Iterate through each outcome's vault.
-          for outcome_vault in &mut self.outcome_tokens {
-              // Take all tokens from the outcome vault.
-              let tokens = outcome_vault.take_all();
-      
-              // Transfer tokens from outcome vaults to the xrd_vault.
-              self.xrd_vault.put(tokens);
-          }
-      
-          // Iterate over all the user bets and refund them.
-          for (_, outcome_bets) in &self.bets {
-              for (user, bet_amt) in outcome_bets {
-                  // Extract the refund amount from the xrd_vault.
-                  let refund_bucket = self.xrd_vault.take(*bet_amt);
-      
-                  // Transfer the refund to the user's vault.
-                  if let Some(user_vault) = self.user_vaults.get_mut(user) {
-                      user_vault.put(refund_bucket);
-                  }
-              }
-          }
-      
-          // Reset the total_staked amount to 0 and mark the market as resolved to prevent further interactions.
-          self.reset_and_resolve_market();
 
+        pub fn resolve_market_as_void(&mut self) -> Result<(), String> {
+            // Ensure the market hasn't been resolved before.
+            self.ensure_market_not_resolved();
+    
+            // Iterate through each outcome's vault.
+            for outcome_vault in &mut self.outcome_tokens {
+                // Take all tokens from the outcome vault.
+                let tokens = outcome_vault.take_all();
+    
+                // Transfer tokens from outcome vaults to the xrd_vault.
+                self.xrd_vault.put(tokens);
+            }
+    
+          // Iterate over all the user bets and refund them.
+            for (_, outcome_bets) in &self.bets {
+                for (user, bet_amt) in outcome_bets {
+                    // Extract the refund amount from the xrd_vault.
+                    let refund_bucket = self.xrd_vault.take(*bet_amt);
+    
+                    // Transfer the refund to the user's vault.
+                    if let Some(user_vault) = self.user_vaults.get_mut(user) {
+                        user_vault.put(refund_bucket);
+                    }
+                }
+            }
+    
+            // Reset the total_staked amount to 0 and mark the market as resolved to prevent further interactions.
+            self.reset_and_resolve_market();
 
             // Emit the MarketResolvedAsVoidEvent right after the market is resolved as void.
-          Runtime::emit_event(MarketResolvedAsVoidEvent {
-            market_id: self.title.clone(),
-        });
+            Runtime::emit_event(MarketResolvedAsVoidEvent {
+                market_id: self.title.clone(),
+            });
 
-      
-          // Return Ok to indicate the market was successfully resolved as void.
-          Ok(())
-      }
+    
+            // Return Ok to indicate the market was successfully resolved as void.
+            Ok(())
+        }
 
       // 3. Betting and Claiming Rewards - Users only:
-      pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) {
-        // Ensure the market hasn't been resolved before.
-        self.ensure_market_not_resolved();
+        pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) {
+            // Ensure the market hasn't been resolved before.
+            self.ensure_market_not_resolved();
+            
+            // Validate the bet.
+            self.validate_bet(&payment);
         
-        // Validate the bet.
-        self.validate_bet(&payment);
-    
-        // Get the outcome's position.
-        let outcome_position = self.get_outcome_position(&outcome);
-    
-        // Ensure user vault exists.
-        self.ensure_user_vault_exists(user_hash.clone());
-    
-        // Extract payment amount before moving `payment`
-        let payment_amount = payment.amount();
+            // Get the outcome's position.
+            let outcome_position = self.get_outcome_position(&outcome);
+        
+            // Ensure user vault exists.
+            self.ensure_user_vault_exists(user_hash.clone());
+        
+            // Extract payment amount before moving `payment`
+            let payment_amount = payment.amount();
 
-        // Get a mutable reference to the vault associated with the outcome.
-        let outcome_token = &mut self.outcome_tokens[outcome_position];
-        // Deposit the payment into the outcome's vault.
-        outcome_token.put(payment);
-        // Update the total amount staked in the market.
-        self.total_staked += payment_amount;
-        // Record the bet.
-        let outcome_clone = self.outcomes[outcome_position].clone();
-        let outcome_bets = self.bets.entry(outcome_clone).or_insert_with(Vec::new);
-        outcome_bets.push((user_hash.clone(), payment_amount));
+            // Get a mutable reference to the vault associated with the outcome.
+            let outcome_token = &mut self.outcome_tokens[outcome_position];
+            // Deposit the payment into the outcome's vault.
+            outcome_token.put(payment);
+            // Update the total amount staked in the market.
+            self.total_staked += payment_amount;
+            // Record the bet.
+            let outcome_clone = self.outcomes[outcome_position].clone();
+            let outcome_bets = self.bets.entry(outcome_clone).or_insert_with(Vec::new);
+            outcome_bets.push((user_hash.clone(), payment_amount));
 
-        // Emit the BetPlacedEvent.
-        Runtime::emit_event(BetPlacedEvent {
-            market_id: self.title.clone(),
-            user_hash,
-            outcome,
-            amount: payment_amount,
-        });
-
+            // Emit the BetPlacedEvent.
+            Runtime::emit_event(BetPlacedEvent {
+                market_id: self.title.clone(),
+                user_hash,
+                outcome,
+                amount: payment_amount,
+            });
 
     }
 
     pub fn claim_reward(&mut self, user_hash: String) -> Option<Bucket> {
-      // Attempt to get a mutable reference to the user's vault using the provided user_hash.
-      if let Some(vault) = self.user_vaults.get_mut(&user_hash) {
-          // If the user's vault exists, take all tokens from the vault as the reward.
-          let bucket = vault.take_all();
-          
-          // Assert that the bucket is not empty.
-          assert!(!bucket.is_empty(), "Bucket is empty");
+        // Attempt to get a mutable reference to the user's vault using the provided user_hash.
+        if let Some(vault) = self.user_vaults.get_mut(&user_hash) {
+            // If the user's vault exists, take all tokens from the vault as the reward.
+            let bucket = vault.take_all();
+            
+            // Assert that the bucket is not empty.
+            assert!(!bucket.is_empty(), "Bucket is empty");
 
-          // Emit an event to indicate successful reward claim.
-        Runtime::emit_event(ClaimRewardEvent {
-            market_id: self.title.clone(),
-            user_hash: user_hash.clone(),
-            reward: bucket.amount(),
-        });
-          
-          Some(bucket)
-          
+            // Emit an event to indicate successful reward claim.
+            Runtime::emit_event(ClaimRewardEvent {
+                market_id: self.title.clone(),
+                user_hash: user_hash.clone(),
+                reward: bucket.amount(),
+            });
+            
+            Some(bucket)
+        
 
-      } else {
-          // If the user's vault does not exist, return None.
-          None
-      }
-  }
-  
+            } else {
+            // If the user's vault does not exist, return None.
+            None
+        }
+    }
 
         // 4. Getters:
         
@@ -394,9 +390,9 @@ mod prediction_market {
         }
 
         pub fn get_market_details(&self) -> (String, Vec<String>, Vec<Decimal>, Decimal) {
-          (self.title.clone(), self.outcomes.clone(), self.odds.clone(), self.total_staked.clone())
-      }
-      
+            (self.title.clone(), self.outcomes.clone(), self.odds.clone(), self.total_staked.clone())
+        }
+    
 
         pub fn get_outcome_balance(&self, outcome: String) -> Decimal {
             assert!(self.outcomes.contains(&outcome), "Outcome does not exist.");
@@ -408,55 +404,55 @@ mod prediction_market {
         // 5. Helpers:
         
         fn ensure_market_not_resolved(&self) {
-          assert!(!self.market_resolved, "Market '{}' has already been resolved.", self.title);
-      }
+            assert!(!self.market_resolved, "Market '{}' has already been resolved.", self.title);
+        }
 
         fn ensure_user_vault_exists(&mut self, user_hash: String) {
-          // Check if a vault exists for the user, if not, create a new one.
-          if !self.user_vaults.contains_key(&user_hash) {
-              self.user_vaults.insert(user_hash.clone(), Vault::new(XRD));
-          }
-      }
+            // Check if a vault exists for the user, if not, create a new one.
+            if !self.user_vaults.contains_key(&user_hash) {
+            self.user_vaults.insert(user_hash.clone(), Vault::new(XRD));
+            }
+        }
 
         // Validate the bet using assertions.
         fn validate_bet(&self, payment: &Bucket) {
-          // Assert the market is not locked.
-          assert!(
-              !self.market_locked, 
-              "Market '{}' is locked. No more bets can be placed.", 
-              self.title
-          );
-          
-          let bet_amount = payment.amount();
-          
-          assert!(
-              bet_amount >= self.min_bet,
-              "Bet amount {} is below the minimum allowed of {}.", 
-              bet_amount, self.min_bet
-          );
-          
-          assert!(
-              bet_amount <= self.max_bet, 
-              "Bet amount {} exceeds the maximum allowed of {}.", 
-              bet_amount, self.max_bet
-          );
+            // Assert the market is not locked.
+            assert!(
+                !self.market_locked, 
+                "Market '{}' is locked. No more bets can be placed.", 
+                self.title
+            );
+        
+        let bet_amount = payment.amount();
+        
+        assert!(
+                bet_amount >= self.min_bet,
+                "Bet amount {} is below the minimum allowed of {}.", 
+                bet_amount, self.min_bet
+            );
+        
+        assert!(
+                bet_amount <= self.max_bet, 
+                "Bet amount {} exceeds the maximum allowed of {}.", 
+                bet_amount, self.max_bet
+            );
 
-          assert!(
-              bet_amount > Decimal::from(0),
-              "Invalid bet amount."
-          );
+        assert!(
+                bet_amount > Decimal::from(0),
+                "Invalid bet amount."
+            );
         }
 
         // Get outcome position using assertion
-      fn get_outcome_position(&self, outcome: &String) -> usize {
-        self.outcomes.iter().position(|o| o == outcome)
+        fn get_outcome_position(&self, outcome: &String) -> usize {
+            self.outcomes.iter().position(|o| o == outcome)
             .expect(&format!("Outcome '{}' does not exist. The available outcomes are: {:?}", outcome, self.outcomes))
-      } 
-  
-      fn reset_and_resolve_market(&mut self) {
+        } 
+
+        fn reset_and_resolve_market(&mut self) {
         self.total_staked = Decimal::from(0);
         self.market_resolved = true;
-      }
+        }
 
     }        
 }
