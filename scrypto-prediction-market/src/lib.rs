@@ -18,7 +18,7 @@ FUNCTIONALITY HIGHLIGHTS:
         - Getters (Methods to fetch specific data)
         - Helper Functions (Internal utility functions)
 
-SPECIFIC FUNCTION OVERVIEWS:
+SPECIFIC FUNCTION AND METHOD OVERVIEWS:
 1.  Initialization and Setup:
         - `instantiate_prediction_market`: Set up the market with given parameters.
         - `deposit_to_xrd_vault`: Allow deposits to the market's XRD vault.
@@ -52,36 +52,50 @@ SPECIFIC FUNCTION OVERVIEWS:
 
 use scrypto::prelude::*;
 
+/// About the `market_id` field in the events below:
+/// - The `market_id` serves as the identifier for the market.
+/// - Currently, it's set using the title of the market.
+/// - For unique identification, especially in cases with multiple instances of the same market,
+///   consider transitioning to a UUID.
+
+/// Represents an event that gets emitted when a market is resolved.
+/// This means that the outcome of the market is determined.
 #[derive(ScryptoSbor, ScryptoEvent)]
 struct MarketResolvedEvent {
     market_id: String,  
-    winning_outcome: u32,
+    winning_outcome: u32, // The index representing the winning outcome of the market.
 }
 
+/// Represents an event when a market is resolved as void.
+/// Can occur if a market has an ambiguous or indeterminate outcome.
 #[derive(ScryptoSbor, ScryptoEvent)]
 struct MarketResolvedAsVoidEvent {
     market_id: String,
 }
 
+/// Event that indicates when a market is locked, preventing further bets.
 #[derive(ScryptoSbor, ScryptoEvent)]
 struct MarketLockedEvent {
     market_id: String,
 }
 
+/// Event emitted when a user places a bet on a specific market outcome.
 #[derive(ScryptoSbor, ScryptoEvent)]
 struct BetPlacedEvent {
     market_id: String,
-    user_hash: String,
-    outcome: String,
-    amount: Decimal,
+    user_hash: String,  // Unique identifier for the user placing the bet.
+    outcome: String,    // Chosen outcome the user is betting on.
+    amount: Decimal,    // Amount of XRD the user is betting.
 }
 
+/// Event emitted when a user claims their reward after a market's resolution.
 #[derive(ScryptoSbor, ScryptoEvent)]
 struct ClaimRewardEvent {
     market_id: String,
-    user_hash: String,
-    reward: Decimal,
+    user_hash: String,  // Unique identifier for the user claiming the reward.
+    reward: Decimal,    // Amount of the XRD reward being claimed.
 }
+
 
 #[blueprint]
 #[events(MarketResolvedEvent, MarketLockedEvent, BetPlacedEvent, MarketResolvedAsVoidEvent, ClaimRewardEvent)]
