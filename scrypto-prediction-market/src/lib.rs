@@ -164,7 +164,7 @@ mod prediction_market {
         // Each entry consists of the user's hash and the amount they bet.
         bets: HashMap<String, Vec<(String, Decimal)>>,
         
-        // Vault for the XRD token (potentially the primary currency of the system).
+        // Vault for the XRD token.
         xrd_vault: Vault,
         
         // Vault for the admin.
@@ -329,6 +329,10 @@ mod prediction_market {
 /// #[doc = include_str!("../transactions/deposit_to_xrd_vault.rtm")]
 /// ```
         pub fn deposit_to_xrd_vault(&mut self, deposit: Bucket) {
+            assert!(
+                !deposit.is_empty(),
+                "Deposit bucket is empty."
+            );
             self.xrd_vault.put(deposit);
         }
 
