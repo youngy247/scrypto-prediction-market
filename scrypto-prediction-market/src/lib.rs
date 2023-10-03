@@ -626,6 +626,44 @@ mod prediction_market {
 
     }
 
+/// Allows a user to claim their reward after a market is resolved.
+///
+/// This method enables users to retrieve their rewards from a previously placed bet, given that their prediction was accurate. 
+/// The reward tokens are extracted from the user's vault, and an event is emitted to indicate a successful claim.
+///
+/// # Preconditions:
+/// 
+/// * The market should have been resolved before a user attempts to claim their reward.
+/// * The user should have a non-empty vault, meaning they have won a bet in the past.
+///
+/// # Side Effects:
+///
+/// * The tokens equivalent to the user's reward are removed from their vault.
+/// * An event, `ClaimRewardEvent`, is emitted to signal the successful reward claim.
+///
+/// # Parameters:
+/// 
+/// * `user_hash`: A unique identifier (hash) for the user claiming the reward.
+///
+/// # Errors:
+///
+/// * If the user's vault is empty when trying to claim the reward.
+///
+/// # Returns:
+///
+/// * An `Option<Bucket>`: 
+///     - `Some(Bucket)` containing the tokens if the claim is successful.
+///     - `None` if the user does not have a vault or no reward to claim.
+///
+/// ---
+///
+/// **Access control:** Public method, can be called by anyone.
+///
+///  **Transaction manifest:**
+/// `transactions/claim_reward.rtm`
+/// ```text
+/// #[doc = include_str!("../transactions/claim_reward.rtm")]
+///
     pub fn claim_reward(&mut self, user_hash: String) -> Option<Bucket> {
         // Attempt to get a mutable reference to the user's vault using the provided user_hash.
         if let Some(vault) = self.user_vaults.get_mut(&user_hash) {
