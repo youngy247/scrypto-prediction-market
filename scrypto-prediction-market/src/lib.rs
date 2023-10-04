@@ -404,11 +404,8 @@ mod prediction_market {
                     amount, 
                     self.xrd_vault.amount());
 
-            
-            // Get or insert the admin's vault.
-            if !self.admin_vaults.contains_key(&admin_hash) {
-                self.admin_vaults.insert(admin_hash.clone(), Vault::new(XRD));
-            }
+            // Ensure admin vault exists.
+            self.ensure_admin_vault_exists(admin_hash.clone());
 
             // Get the vault for the admin_hash
             let admin_vault = self.admin_vaults.get_mut(&admin_hash).unwrap();
@@ -821,6 +818,13 @@ pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
             // Check if a vault exists for the user, if not, create a new one.
             if !self.user_vaults.contains_key(&user_hash) {
             self.user_vaults.insert(user_hash.clone(), Vault::new(XRD));
+            }
+        }
+
+        fn ensure_admin_vault_exists(&mut self, admin_hash: String){
+            // Check if a vault exists for the admin, if not, create a new one.
+            if !self.admin_vaults.contains_key(&admin_hash) {
+                self.admin_vaults.insert(admin_hash.clone(), Vault::new(XRD));
             }
         }
 
