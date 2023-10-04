@@ -18,6 +18,16 @@ FUNCTIONALITY HIGHLIGHTS:
         - Getters (Methods to fetch specific data)
         - Helper Functions (Internal utility functions)
 
+ADDITIONAL CONSIDERATIONS:
+1. Barrier of Entry:
+    - The market requires initial funding in the treasury to function, which may present a barrier to entry.
+
+2. Market Resolution:
+    - Only trusted third parties, like Chainlink, should be allowed to call the resolve market methods to ensure accurate market resolution.
+
+3. Dynamic Odds:
+    - The odds for each outcome should dynamically adjust based on the volume of bets placed. More bets on a particular outcome should decrease its odds, reflecting the perceived likelihood of that outcome.
+
 SPECIFIC FUNCTION AND METHOD OVERVIEWS:
 1.  Initialization and Setup:
         - `instantiate_prediction_market`: Set up the market with given parameters.
@@ -44,6 +54,7 @@ SPECIFIC FUNCTION AND METHOD OVERVIEWS:
 5.  Helper Functions (Internal utility functions):
         - `ensure_market_not_resolved`: Ensure the market hasn't been resolved before proceeding.
         - `ensure_user_vault_exists`: Ensure a user vault exists or create one if it doesn't.
+        - `ensure_admin_vault_exists`: Ensure an admin vault exists or create one if it doesn't.
         - `validate_bet`: Validate the provided bet ensuring the amount is within limits and the market isn't locked.
         - `get_outcome_position`: Get the index position of a specified outcome in the market.
         - `reset_and_resolve_market`: Reset the total staked amount and mark the market as resolved.
@@ -389,7 +400,7 @@ mod prediction_market {
 /// 
 /// ---
 ///
-/// **Access control:** Admin only.
+/// **Access control:** Super-Admin only.
 /// 
 /// **Transaction manifest:**
 /// `transactions/withdraw_from_vault.rtm`
