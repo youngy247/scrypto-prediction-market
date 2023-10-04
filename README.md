@@ -1,6 +1,6 @@
-scrypto-prediction-market
 
-RadBet - A Comprehensive Prediction Market Framework
+
+**RadBet - A Comprehensive Prediction Market Framework**
 This project delivers a blueprint focused on establishing a robust prediction market infrastructure. Investors and participants can utilize this platform to make predictions on various events and potentially earn returns based on the outcomes.
 
 The core of the project is encapsulated within the primary blueprint, named the PredictionMarketBlueprint. It's designed with modularity and interaction in mind, to integrate seamlessly with various prediction models and market structures.
