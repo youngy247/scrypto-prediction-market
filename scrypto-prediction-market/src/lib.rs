@@ -114,17 +114,18 @@ mod prediction_market {
         
         // Roles and their updatable conditions.
         roles {
-            // The `admin` role has no updatable conditions, meaning once set, it remains fixed.
-            admin => updatable_by: [];
+            super_admin => updatable_by: [];
+            admin => updatable_by: [super_admin];
         },
         
         // Specify which methods can be accessed by which roles.
         methods {
+            // These methods can only be accessed by the `super_admin`.
+            withdraw_from_vault => restrict_to: [super_admin];
             // Only the `admin` can resolve, lock, and resolve the market as void.
             resolve_market => restrict_to: [admin]; 
             resolve_market_as_void => restrict_to: [admin];
             lock_market => restrict_to: [admin];
-            withdraw_from_vault => restrict_to: [admin];
             admin_claim => restrict_to: [admin];
             
             // These methods can be accessed by any user.
@@ -164,11 +165,11 @@ mod prediction_market {
         // Each entry consists of the user's hash and the amount they bet.
         bets: HashMap<String, Vec<(String, Decimal)>>,
         
-        // Vault for the XRD token.
+        // Treasury Vault for the XRD token.
         xrd_vault: Vault,
         
-        // Vault for the admin.
-        admin_vault: Vault,
+        // Vaults for the admins.
+        admin_vaults: HashMap<String, Vault>,
         
         // Vaults for individual users, mapped by user hash.
         user_vaults: HashMap<String, Vault>,
@@ -222,7 +223,7 @@ mod prediction_market {
 
         pub fn instantiate_prediction_market(title: String, outcomes_str: String, odds_str: String, min_bet: Decimal, 
         max_bet: Decimal
-        ) -> (Global<PredictionMarket>, FungibleBucket) {
+        ) -> (Global<PredictionMarket>, FungibleBucket, FungibleBucket) {
 
             let outcomes: Vec<String> = outcomes_str.split(',').map(|s| s.trim().to_string()).collect();
             // Validate Uniqueness of Outcomes
@@ -272,6 +273,11 @@ mod prediction_market {
                 outcome_tokens.push(Vault::new(XRD)); // Create a new XRD vault for each outcome
             }
 
+            let super_admin_badge = ResourceBuilder::new_fungible(OwnerRole::None)
+            .metadata(metadata!(init {"name" => "Super Admin Badge", locked;}))
+            .divisibility(DIVISIBILITY_NONE)
+            .mint_initial_supply(1);
+
             let admin_badge = ResourceBuilder::new_fungible(OwnerRole::None) // #1
             .metadata(metadata!(init{"name"=>"admin badge", locked;}))
             .divisibility(DIVISIBILITY_NONE)
@@ -288,7 +294,7 @@ mod prediction_market {
                 total_staked: Decimal::from(0),
                 bets: HashMap::new(),
                 xrd_vault: Vault::new(XRD),
-                admin_vault: Vault::new(XRD),
+                admin_vaults: HashMap::new(),
                 user_vaults: HashMap::new(),
                 market_resolved: false,
                 market_locked: false,
@@ -296,7 +302,10 @@ mod prediction_market {
             .instantiate()
             .prepare_to_globalize(OwnerRole::None)
             .roles(roles!(
-                admin => rule!(require(admin_badge.resource_address()));
+                super_admin => rule!( 
+                    require_amount(dec!(1), super_admin_badge.resource_address()) 
+                );
+                admin => rule!(require_any_of(vec![admin_badge.resource_address(), super_admin_badge.resource_address()]));
             ))
             .globalize();
 
@@ -308,7 +317,8 @@ mod prediction_market {
             // Return the component address and the owner_badge
             (
                 component,
-                admin_badge
+                super_admin_badge,
+                admin_badge,
             )
         }
 
@@ -387,14 +397,18 @@ mod prediction_market {
 /// ```text
 /// #[doc = include_str!("../transactions/withdraw_from_vault.rtm")]
 /// ```
-        pub fn withdraw_from_vault(&mut self, amount: Decimal) {
-            // Ensure the xrd_vault has enough funds to fulfill the withdrawal request.
+        pub fn withdraw_from_vault(&mut self, admin_hash: String, amount: Decimal) {
+            // Ensure the xrd_vault has enough funds.
             assert!(self.xrd_vault.amount() >= amount, "Insufficient funds in xrd_vault.");
-        
-            // Take the specified amount from the xrd_vault.
+            
+            // Get or insert the admin's vault.
+            let admin_vault = self.admin_vaults.entry(admin_hash.to_string()).or_insert(Vault::new(XRD));
+            
+            // Transfer the amount.
             let withdrawal_bucket = self.xrd_vault.take(amount);
-            self.admin_vault.put(withdrawal_bucket);
+            admin_vault.put(withdrawal_bucket);
         }
+
 
 /// Claims all tokens from the `admin_vault`.
 /// 
@@ -407,15 +421,19 @@ mod prediction_market {
 /// ```text
 /// #[doc = include_str!("../transactions/admin_claim.rtm")]
 /// ```
-        pub fn admin_claim(&mut self) -> Option<Bucket> {
-            // Take all tokens from the admin_vault.
-            let bucket = self.admin_vault.take_all();
+pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
+    // Ensure admin's vault exists.
+    let admin_vault = self.admin_vaults.get_mut(&admin_hash).expect("Admin vault not found.");
 
-            // Assert that the bucket is not empty.
-            assert!(!bucket.is_empty(), "Bucket is empty");
+    // Take all tokens from the admin's vault.
+    let bucket = admin_vault.take_all();
 
-            Some(bucket)
-        }
+    // Assert that the bucket is not empty.
+    assert!(!bucket.is_empty(), "Bucket is empty");
+
+    Some(bucket)
+}
+
 
 /// Resolves the market by determining the winning outcome and distributing rewards accordingly.
 ///
