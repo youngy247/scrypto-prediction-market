@@ -4,6 +4,5 @@ CALL_METHOD
       Decimal("100");  
 
 CALL_METHOD
-    Address("${market}")   
-    "list_outcomes";
-    
+      Address("${market}")   
+      "list_outcomes";

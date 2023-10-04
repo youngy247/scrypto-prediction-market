@@ -14,6 +14,6 @@ CALL_FUNCTION
       Decimal("100");
 
 CALL_METHOD
-    Address("${account}")
-    "deposit_batch"
-    Expression("ENTIRE_WORKTOP");
+      Address("${account}")
+      "deposit_batch"
+      Expression("ENTIRE_WORKTOP");
