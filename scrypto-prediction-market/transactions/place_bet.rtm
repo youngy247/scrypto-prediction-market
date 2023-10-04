@@ -22,7 +22,7 @@ CALL_METHOD
     Address("${market}")
     "place_bet"
     "${account}"
-    "Yes"
+    "Ireland"
     Bucket("bet_bucket");
 
 # Deposit any remaining funds back into your account.

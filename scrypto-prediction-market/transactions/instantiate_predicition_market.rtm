@@ -7,9 +7,9 @@ CALL_FUNCTION
       Address("${package}") 
       "PredictionMarket"
       "instantiate_prediction_market"  
-      "market1"
-      "Yes,No"
-      "1.5,2.5"
+      "Who is going to win the Rugby World Cup?"
+      "France,Ireland,England,Wales"
+      "1.4,1.5,2.5,2.3"
       Decimal("5")
       Decimal("100");
 

@@ -4,6 +4,6 @@ CALL_METHOD
       Decimal("100");  
 
 CALL_METHOD
-    Address("${market}")   
-    "get_outcome_balance"
-    "Yes";
+      Address("${market}")   
+      "get_outcome_balance"
+      "Ireland";
