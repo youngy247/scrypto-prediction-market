@@ -224,10 +224,6 @@ mod prediction_market {
 ///
 /// **Transaction manifest:**
 /// `transactions/instantiate_prediction_market.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/instantiate_prediction_market.rtm")]
-/// ```
-
         pub fn instantiate_prediction_market(title: String, outcomes_str: String, odds_str: String, min_bet: Decimal, 
         max_bet: Decimal
         ) -> (Global<PredictionMarket>, FungibleBucket, FungibleBucket) {
@@ -342,9 +338,6 @@ mod prediction_market {
 /// **Access control:** Public method, can be called by anyone.
 ///
 /// **Transaction manifest:** `transactions/deposit_to_xrd_vault.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/deposit_to_xrd_vault.rtm")]
-/// ```
         pub fn deposit_to_xrd_vault(&mut self, deposit: Bucket) {
             assert!(
                 !deposit.is_empty(),
@@ -361,10 +354,7 @@ mod prediction_market {
 ///
 /// **Access control:** Read only, can be called by anyone.
 ///
-/// **Transaction manifest:** `transactions/get_xrd_vault_balance.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/get_xrd_vault_balance.rtm")]
-/// ```      
+/// **Transaction manifest:** `transactions/get_xrd_vault_balance.rtm`    
         pub fn get_xrd_vault_balance(&self) -> Decimal {
             Decimal::from(self.xrd_vault.amount())
         }
@@ -382,9 +372,6 @@ mod prediction_market {
 ///
 /// **Transaction manifest:**
 /// `transactions/lock_market.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/lock_market.rtm")]
-/// ```
         pub fn lock_market(&mut self) {
             self.market_locked = true;
 
@@ -400,10 +387,7 @@ mod prediction_market {
 /// **Access control:** Super-Admin only.
 /// 
 /// **Transaction manifest:**
-/// `transactions/withdraw_from_vault.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/withdraw_from_vault.rtm")]
-/// ```
+/// `transactions/withdraw_from_vault.rtm
         pub fn withdraw_from_vault(&mut self, admin_hash: String, amount: Decimal) {
             // Ensure the xrd_vault has enough funds.
             assert!(self.xrd_vault.amount() >= amount, 
@@ -431,21 +415,18 @@ mod prediction_market {
 /// 
 /// **Transaction manifest:**
 /// `transactions/admin_claim.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/admin_claim.rtm")]
-/// ```
-pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
-    // Ensure admin's vault exists.
-    let admin_vault = self.admin_vaults.get_mut(&admin_hash).expect("Admin vault not found.");
+        pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
+            // Ensure admin's vault exists.
+            let admin_vault = self.admin_vaults.get_mut(&admin_hash).expect("Admin vault not found.");
 
-    // Take all tokens from the admin's vault.
-    let bucket = admin_vault.take_all();
+            // Take all tokens from the admin's vault.
+            let bucket = admin_vault.take_all();
 
-    // Assert that the bucket is not empty.
-    assert!(!bucket.is_empty(), "Bucket is empty");
+            // Assert that the bucket is not empty.
+            assert!(!bucket.is_empty(), "Bucket is empty");
 
-    Some(bucket)
-}
+            Some(bucket)
+        }
 
 
 /// Resolves the market by determining the winning outcome and distributing rewards accordingly.
@@ -472,9 +453,6 @@ pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
 ///
 /// **Transaction manifest:**
 /// `transactions/resolve_market.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/resolve_market.rtm")]
-/// ```
         pub fn resolve_market(&mut self, winning_outcome: u32) -> Result<Vec<(String, Decimal)>, String> {
             // Check that the market is unresolved and the winning outcome is valid.
             self.ensure_market_not_resolved();
@@ -548,9 +526,6 @@ pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
 ///
 /// **Transaction manifest:**
 /// `transactions/resolve_market_as_void.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/resolve_market_as_void.rtm")]
-///
         pub fn resolve_market_as_void(&mut self) -> Result<(), String> {
             // Ensure the market hasn't been resolved before.
             self.ensure_market_not_resolved();
@@ -633,9 +608,6 @@ pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
 /// 
 ///  **Transaction manifest:**
 /// `transactions/place_bet.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/place_bet.rtm")]
-///
         pub fn place_bet(&mut self, user_hash: String, outcome: String, payment: Bucket) {
             // Ensure the market hasn't been resolved before.
             self.ensure_market_not_resolved();
@@ -717,9 +689,6 @@ pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
 ///
 ///  **Transaction manifest:**
 /// `transactions/claim_reward.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/claim_reward.rtm")]
-///
     pub fn claim_reward(&mut self, user_hash: String) -> Option<Bucket> {
         // Attempt to get a mutable reference to the user's vault using the provided user_hash.
         if let Some(vault) = self.user_vaults.get_mut(&user_hash) {
@@ -755,9 +724,6 @@ pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
 ///
 /// **Transaction manifest:**
 /// `transactions/list_outcomes.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/list_outcomes.rtm")]
-///
         pub fn list_outcomes(&self) -> Vec<String> {
             self.outcomes.clone()
         }
@@ -770,9 +736,6 @@ pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
 ///
 /// **Transaction manifest:**
 /// `transactions/get_total_staked.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/get_total_staked.rtm")]
-///
         pub fn get_total_staked(&self) -> Decimal {
             self.total_staked.clone()
         }
@@ -787,9 +750,6 @@ pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
 /// 
 /// **Transaction manifest:**
 /// `transactions/get_market_details.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/get_market_details.rtm")]
-///
         pub fn get_market_details(&self) -> (String, Vec<String>, Vec<Decimal>, Decimal) {
             (self.title.clone(), self.outcomes.clone(), self.odds.clone(), self.total_staked.clone())
         }
@@ -804,16 +764,12 @@ pub fn admin_claim(&mut self, admin_hash: String) -> Option<Bucket> {
 /// 
 /// **Transaction manifest:**
 /// `transactions/get_outcome_balance.rtm`
-/// ```text
-/// #[doc = include_str!("../transactions/get_outcome_balance.rtm")]
-/// 
         pub fn get_outcome_balance(&self, outcome: String) -> Decimal {
             assert!(self.outcomes.contains(&outcome), "Outcome does not exist.");
 
             let index = self.outcomes.iter().position(|o| o == &outcome).expect("Outcome not found.");
             Decimal::from(self.outcome_tokens[index].amount())
         }
-
 
         // 5. Helpers:
         
