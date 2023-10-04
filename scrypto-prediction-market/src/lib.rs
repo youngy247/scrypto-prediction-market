@@ -399,10 +399,19 @@ mod prediction_market {
 /// ```
         pub fn withdraw_from_vault(&mut self, admin_hash: String, amount: Decimal) {
             // Ensure the xrd_vault has enough funds.
-            assert!(self.xrd_vault.amount() >= amount, "Insufficient funds in xrd_vault.");
+            assert!(self.xrd_vault.amount() >= amount, 
+                    "Insufficient funds in xrd_vault. Requested: {}, Available: {}", 
+                    amount, 
+                    self.xrd_vault.amount());
+
             
             // Get or insert the admin's vault.
-            let admin_vault = self.admin_vaults.entry(admin_hash.to_string()).or_insert(Vault::new(XRD));
+            if !self.admin_vaults.contains_key(&admin_hash) {
+                self.admin_vaults.insert(admin_hash.clone(), Vault::new(XRD));
+            }
+
+            // Get the vault for the admin_hash
+            let admin_vault = self.admin_vaults.get_mut(&admin_hash).unwrap();
             
             // Transfer the amount.
             let withdrawal_bucket = self.xrd_vault.take(amount);
