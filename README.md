@@ -11,7 +11,7 @@ Note: Further details on supporting components or additional blueprints will be 
 
 How to Build the Blueprints
 
-1) Ensure your development environment is set up with the required tools, especially the resim tool. More information on setting this up can be found here. For this project, you should be using Scrypto 1.0.0.
+1) Ensure your development environment is set up with the required tools, especially the resim tool. More information on setting this up can be found [here](https://docs.radixdlt.com/docs). For this project, you should be using Scrypto 1.0.0.
 
 2) To build the project:
 
