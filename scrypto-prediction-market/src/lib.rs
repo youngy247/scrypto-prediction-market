@@ -26,8 +26,8 @@ SPECIFIC FUNCTION AND METHOD OVERVIEWS:
 
 2.  Market Management (Admin-only):
         - `lock_market`: Prevent further bets on this market.
-        - `withdraw_from_vault`: Admin can withdraw a specified amount from the xrd_vault.
-        - `admin_claim`: Admin can claim tokens from the admin_vault.
+        - `withdraw_from_vault`: A super-admin can withdraw a specified amount from the xrd_vault.
+        - `admin_claim`: Admin can claim tokens from their admin_vault.
         - `resolve_market`: Determine the winning outcome and distribute rewards.
         - `resolve_market_as_void`: Void the market and refund all bets.
 
@@ -63,7 +63,6 @@ use scrypto::prelude::*;
 struct MarketCreatedEvent {
     market_id: String,
 }
-
 
 /// Represents an event that gets emitted when a market is resolved.
 /// This means that the outcome of the market is determined.
@@ -188,7 +187,7 @@ mod prediction_market {
 
 /// Initializes and sets up a new Prediction Market, returning the created market's global component and any admin badges.
 ///
-/// Will panic if the provided input parameters are not valid.
+///  Will panic if the provided input parameters are not valid.
 ///
 /// `title`: Represents the name or title of the prediction market.
 ///
@@ -207,7 +206,7 @@ mod prediction_market {
 /// - `min_bet` is at least 5 and `max_bet` is greater than `min_bet`.
 ///
 /// After validation, the function creates a vault for each outcome and initializes the prediction market with the provided data. 
-/// An `admin_badge` is also created to represent the admin role for this prediction market.
+/// An `admin_badge` and `super_badge` is also created to represent the admin role for this prediction market.
 ///
 /// This function emits a `MarketCreatedEvent` once the market is successfully created.
 ///
