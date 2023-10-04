@@ -4,7 +4,7 @@ This project delivers a blueprint focused on establishing a robust prediction ma
 
 ## Core Architecture
 
-The core of the project is encapsulated within the primary blueprint, named the `PredictionMarketBlueprint`. It's designed with modularity and interaction in mind, to integrate seamlessly with various prediction models and market structures.
+The core of the project is encapsulated within the primary blueprint, named the `PredictionMarket` blueprint. It's designed with modularity and interaction in mind, to integrate seamlessly with various prediction models and market structures.
 
 ### Structure
 
@@ -17,7 +17,7 @@ The core of the project is encapsulated within the primary blueprint, named the 
 1. Ensure your development environment is set up with the required tools, especially the `resim` tool. More information on setting this up can be found [here](https://docs.radixdlt.com/docs). For this project, you should be using Scrypto 1.0.0.
 
 2. To build the project:
-   - Navigate to the `prediction-market-blueprint` directory in your terminal.
+   - Navigate to the `scrypto-prediction-market` directory in your terminal.
    - Execute the command:
      ```bash
      cargo build
