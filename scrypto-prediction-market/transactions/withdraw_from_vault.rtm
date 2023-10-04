@@ -6,10 +6,11 @@ CALL_METHOD
 CALL_METHOD
     Address("${account}")
     "create_proof_of_amount"
-    Address("${badge}")   
+    Address("${super_badge}")   
     Decimal("1");  
 
 CALL_METHOD
-    Address("${market}")   
+    Address("${market}")  
     "withdraw_from_vault"
+    "${account}"
     Decimal("500");
