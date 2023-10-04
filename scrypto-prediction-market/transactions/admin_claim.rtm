@@ -12,4 +12,9 @@ CALL_METHOD
 CALL_METHOD
     Address("${market}")   
     "admin_claim"
-    Decimal("500");
+    "${account}";
+
+CALL_METHOD 
+    Address("${account}") 
+    "deposit_batch" 
+    Expression("ENTIRE_WORKTOP");
