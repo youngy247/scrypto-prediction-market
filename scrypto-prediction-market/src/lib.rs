@@ -28,6 +28,9 @@ ADDITIONAL CONSIDERATIONS:
 3. Dynamic Odds:
     - The odds for each outcome should dynamically adjust based on the volume of bets placed. More bets on a particular outcome should decrease its odds, reflecting the perceived likelihood of that outcome.
 
+4. Authorization:
+    - Currently, the blueprint provides a `super_admin` and an `admin` badge upon instantiation of the prediction market. These badges control access to various administrative functions within the blueprint. Developers interested in a more robust or decentralized authorization mechanism may want to clone this repository and extend the blueprint to integrate with an external authorization blueprint or system. This could provide enhanced control over who can perform administrative actions, and potentially allow for a more flexible governance model.
+
 SPECIFIC FUNCTION AND METHOD OVERVIEWS:
 1.  Initialization and Setup:
         - `instantiate_prediction_market`: Set up the market with given parameters.
