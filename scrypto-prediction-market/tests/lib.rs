@@ -42,17 +42,6 @@ fn test_instantiate_prediction_market() -> Result<(), RuntimeError> {
     println!("{:?}\n", receipt1);
     receipt1.expect_commit_success();
     
-    // ... [If needed to use the badge later]
-    // let use_badge_manifest = ManifestBuilder::new()
-    //     .create_proof_from_account_of_amount(_account_component, admin_badge, dec!("1"))
-    //     .call_method(prediction_market_component, "some_admin_method", manifest_args!())
-    //     .build();
-    // let use_badge_receipt = test_runner.execute_manifest_ignoring_fee(
-    //     use_badge_manifest,
-    //     vec![NonFungibleGlobalId::from_public_key(&public_key)],
-    // );
-    // use_badge_receipt.expect_commit_success();
-    
     Ok(())
 }
 
@@ -110,6 +99,53 @@ fn test_list_outcomes() -> Result<(), RuntimeError> {
 
     // Assert the outcomes
     assert_eq!(outcomes, outcomes_str.split(',').map(|s| s.trim().to_string()).collect::<Vec<_>>());
+
+    Ok(())
+}
+
+#[test]
+fn test_deposit() -> Result<(), RuntimeError> {
+    let mut test_runner = TestRunnerBuilder::new().build();
+    let (public_key, _private_key, account_component) = test_runner.new_allocated_account();
+    let package_address = test_runner.compile_and_publish(this_package!());
+
+    // Mock deposit amount
+    let deposit_amount = dec!("200");
+
+    let bucket_name: String = "deposit_bucket".into();
+
+    // Construct the deposit manifest
+    let deposit_manifest = ManifestBuilder::new()
+        .call_method(
+            account_component,
+            "lock_fee",
+            manifest_args!(dec!("100"))
+        )
+        .call_method(
+            account_component,
+            "withdraw",
+            manifest_args!(XRD, deposit_amount.clone())
+        )
+        .take_from_worktop(
+            XRD, 
+            deposit_amount.clone(), 
+            bucket_name.clone()
+        )        
+        .call_method(
+            package_address,
+            "deposit_to_xrd_vault",
+            manifest_args!(bucket_name)
+        )
+        .call_method(
+            account_component,
+            "deposit_batch",
+            manifest_args!(ManifestExpression::EntireWorktop),
+        )
+        .build();
+
+    // Debug: Execute the deposit and print the receipt
+    let deposit_receipt = test_runner.execute_manifest_ignoring_fee(deposit_manifest, vec![NonFungibleGlobalId::from_public_key(&public_key)]);
+    println!("Deposit Receipt: {:?}", deposit_receipt);
 
     Ok(())
 }
