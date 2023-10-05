@@ -28,7 +28,7 @@
 //!
 //! ## SPECIFIC FUNCTION AND METHOD OVERVIEWS:
 //! 1.  Initialization and Setup:
-//!         - `instantiate_prediction_market`: Set up the market with given parameters.
+//!         - `instantiate_prediction_market`: Set up the market with given parameters (when setting the minimum bet amount for XRD it must be over 5 for spam prevention).
 //!         - `deposit_to_xrd_vault`: Allow deposits to the market's XRD vault.
 //!         - `get_xrd_vault_balance`: Fetch the current balance of the XRD vault.
 //!
