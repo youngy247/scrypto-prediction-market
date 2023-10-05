@@ -12,4 +12,4 @@ CALL_METHOD
 CALL_METHOD
     Address("${market}")   
     "resolve_market"
-    0u32; 
+    1u32; 
